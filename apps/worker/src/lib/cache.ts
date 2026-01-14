@@ -1,0 +1,248 @@
+import Redis from "ioredis";
+import { logger } from "./logger.js";
+
+let redisClient: Redis | null = null;
+
+/**
+ * Initialize Redis connection
+ * Should be called at application startup
+ */
+export async function initializeRedis(): Promise<boolean> {
+  const redisUrl = process.env.REDIS_URL;
+  
+  if (!redisUrl) {
+    logger.warn("REDIS_URL not configured, cache will be disabled");
+    return false;
+  }
+
+  if (!redisClient) {
+    try {
+      redisClient = new Redis(redisUrl, {
+        maxRetriesPerRequest: 3,
+        retryStrategy: (times) => {
+          if (times > 3) {
+            return null;
+          }
+          return Math.min(times * 50, 2000);
+        },
+        lazyConnect: true, // Use lazy connect to avoid conflicts with BullMQ
+        connectTimeout: 10000,
+        enableReadyCheck: true,
+      });
+
+      redisClient.on("error", (error) => {
+        logger.error("Redis error", error);
+      });
+
+      redisClient.on("connect", () => {
+        logger.debug("Redis connected");
+      });
+
+      redisClient.on("ready", () => {
+        logger.debug("Redis ready");
+      });
+
+      // Verificar status antes de conectar
+      if (redisClient.status === 'end' || redisClient.status === 'wait') {
+        await redisClient.connect();
+      } else if (redisClient.status === 'ready' || redisClient.status === 'connecting') {
+        // Já está conectado ou conectando, apenas aguardar
+        return true;
+      }
+      return true;
+    } catch (error) {
+      logger.error("Failed to initialize Redis", error as Error);
+      return false;
+    }
+  }
+
+  // Se já existe, verificar se está conectado
+  if (redisClient.status === 'ready' || redisClient.status === 'connecting') {
+    return true;
+  }
+
+  return true;
+}
+
+/**
+ * Get Redis client instance (singleton)
+ * Returns null if Redis is not configured or unavailable
+ */
+function getRedisClient(): Redis | null {
+  const redisUrl = process.env.REDIS_URL;
+  
+  if (!redisUrl) {
+    return null;
+  }
+
+  return redisClient;
+}
+
+/**
+ * Normalize URL for cache key consistency
+ */
+function normalizeUrl(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    // Remove trailing slashes, normalize protocol
+    return `${urlObj.protocol}//${urlObj.host}${urlObj.pathname.replace(/\/$/, "")}${urlObj.search}`;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Generate cache key with prefix
+ */
+export function cacheKey(prefix: string, ...parts: (string | number)[]): string {
+  const normalizedParts = parts.map((part) => {
+    if (typeof part === "string") {
+      return normalizeUrl(part);
+    }
+    return String(part);
+  });
+  return `${prefix}:${normalizedParts.join(":")}`;
+}
+
+/**
+ * Get value from cache
+ * Returns null if not found or Redis unavailable
+ */
+export async function get<T = any>(key: string): Promise<T | null> {
+  const client = getRedisClient();
+  if (!client) {
+    return null;
+  }
+
+  try {
+    const value = await client.get(key);
+    if (!value) {
+      return null;
+    }
+    return JSON.parse(value) as T;
+  } catch (error) {
+    logger.error(`Error getting cache key ${key}`, error as Error);
+    return null;
+  }
+}
+
+/**
+ * Set value in cache with TTL
+ * Returns true if successful, false otherwise
+ */
+export async function set(
+  key: string,
+  value: any,
+  ttlSeconds: number,
+): Promise<boolean> {
+  const client = getRedisClient();
+  if (!client) {
+    return false;
+  }
+
+  try {
+    const serialized = JSON.stringify(value);
+    await client.setex(key, ttlSeconds, serialized);
+    return true;
+  } catch (error) {
+    logger.error(`Error setting cache key ${key}`, error as Error);
+    return false;
+  }
+}
+
+/**
+ * Delete key from cache
+ */
+export async function del(key: string): Promise<boolean> {
+  const client = getRedisClient();
+  if (!client) {
+    return false;
+  }
+
+  try {
+    await client.del(key);
+    return true;
+  } catch (error) {
+    logger.error(`Error deleting cache key ${key}`, error as Error);
+    return false;
+  }
+}
+
+/**
+ * Check if Redis is available
+ */
+export async function isAvailable(): Promise<boolean> {
+  const client = getRedisClient();
+  if (!client) {
+    return false;
+  }
+
+  try {
+    const result = await client.ping();
+    return result === "PONG";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get Redis health status
+ */
+export async function getHealthStatus(): Promise<{
+  available: boolean;
+  connected: boolean;
+  error?: string;
+}> {
+  const client = getRedisClient();
+  
+  if (!client) {
+    return {
+      available: false,
+      connected: false,
+      error: "Redis client not initialized",
+    };
+  }
+
+  try {
+    const pingResult = await client.ping();
+    const status = client.status;
+    
+    return {
+      available: true,
+      connected: status === "ready" && pingResult === "PONG",
+      error: status !== "ready" ? `Status: ${status}` : undefined,
+    };
+  } catch (error: any) {
+    return {
+      available: false,
+      connected: false,
+      error: error.message || "Unknown error",
+    };
+  }
+}
+
+/**
+ * Cache wrapper function - executes function and caches result
+ * Returns cached value if available, otherwise executes function and caches result
+ */
+export async function cached<T>(
+  key: string,
+  fn: () => Promise<T>,
+  ttlSeconds: number,
+): Promise<T> {
+  // Try to get from cache first
+  const cached = await get<T>(key);
+  if (cached !== null) {
+    return cached;
+  }
+
+  // Execute function
+  const result = await fn();
+
+  // Store in cache (don't await - fire and forget)
+  set(key, result, ttlSeconds).catch((error) => {
+    logger.error(`Error caching result for ${key}`, error as Error);
+  });
+
+  return result;
+}

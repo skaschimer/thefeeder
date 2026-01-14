@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         Role     @default(user)
+  createdAt    DateTime @default(now())
+}
+
+enum Role {
+  admin
+  user
+}
+
+model Feed {
+  id                      String   @id @default(cuid())
+  title                   String
+  url                     String   @unique
+  siteUrl                 String?
+  refreshIntervalMinutes  Int
+  lastFetchedAt           DateTime?
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  // Health tracking
+  status                  FeedStatus    @default(active)
+  failureCount            Int           @default(0)
+  consecutiveFailures     Int           @default(0)
+  lastError               String?
+  lastSuccessAt           DateTime?
+  lastAttemptAt           DateTime?
+  
+  // Configuration
+  customTimeout           Int?          // Custom timeout in seconds (10-120)
+  retryStrategy           RetryStrategy @default(standard)
+  requiresBrowser         Boolean       @default(false)
+  metadata                Json?         // Store additional metadata (alternatives, etc.)
+  
+  // Metrics
+  totalAttempts           Int           @default(0)
+  totalSuccesses          Int           @default(0)
+  totalFailures           Int           @default(0)
+  avgResponseTime         Int?          // Average in milliseconds
+  
+  // Relations
+  items                   Item[]
+  healthLogs              FeedHealthLog[]
+  notifications           FeedNotification[]
+}
+
+model Item {
+  id          String   @id @default(cuid())
+  feedId      String
+  feed        Feed     @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  title       String
+  url         String
+  summary     String?
+  content     String?
+  author      String?
+  imageUrl    String?
+  publishedAt DateTime?
+  sourceGuid  String?  @unique
+  createdAt   DateTime @default(now())
+  likes       Int      @default(0)
+  dislikes    Int      @default(0)
+  votes       VoteTracker[]
+}
+
+model Subscriber {
+  id         String           @id @default(cuid())
+  name       String
+  email      String           @unique
+  status     SubscriptionStatus @default(pending)
+  createdAt  DateTime         @default(now())
+  approvedAt DateTime?
+}
+
+enum SubscriptionStatus {
+  pending
+  approved
+  rejected
+  unsubscribed
+}
+
+model DailyDigestLog {
+  id           String   @id @default(cuid())
+  sentAt       DateTime @default(now())
+  numRecipients Int
+  numItems     Int
+}
+
+model VoteTracker {
+  id        String   @id @default(cuid())
+  voterId   String
+  itemId    String
+  voteType  VoteType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([voterId, itemId])
+  @@index([voterId])
+  @@index([itemId])
+}
+
+enum VoteType {
+  like
+  dislike
+}
+
+enum FeedStatus {
+  active      // Functioning normally
+  degraded    // Occasional failures but still working
+  blocked     // Consistently blocked (403/522)
+  unreachable // Consistently timing out
+  paused      // Manually or automatically paused
+}
+
+enum RetryStrategy {
+  standard     // Normal retry intervals
+  aggressive   // Shorter intervals, more attempts
+  conservative // Longer intervals, fewer attempts
+}
+
+enum NotificationType {
+  warning      // 3 consecutive failures
+  error        // Auto-paused
+  success      // Feed recovered
+  info         // General information
+}
+
+enum NotificationPriority {
+  low
+  normal
+  high
+}
+
+model FeedHealthLog {
+  id            String   @id @default(cuid())
+  feedId        String
+  feed          Feed     @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  
+  attemptedAt   DateTime @default(now())
+  success       Boolean
+  statusCode    Int?
+  errorMessage  String?
+  responseTime  Int?     // Milliseconds
+  strategy      String?  // Which fetch strategy was used
+  
+  @@index([feedId, attemptedAt])
+  @@index([feedId, success])
+}
+
+model FeedNotification {
+  id          String   @id @default(cuid())
+  feedId      String
+  feed        Feed     @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  
+  type        NotificationType
+  priority    NotificationPriority @default(normal)
+  title       String
+  message     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  @@index([isRead, createdAt])
+}
+

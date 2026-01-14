@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  body {
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    transition: var(--theme-transition);
+  }
+
+  html {
+    overflow-x: hidden;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    transition: var(--theme-transition);
+  }
+}
+
+@layer utilities {
+  .text-glow-orange {
+    color: hsl(var(--vaporwave-orange));
+    text-shadow: var(--shadow-glow);
+  }
+
+  .text-glow-pink {
+    color: var(--color-accent-primary);
+    text-shadow: var(--shadow-glow);
+  }
+
+  .text-glow-cyan {
+    color: var(--color-accent-secondary);
+    text-shadow: var(--shadow-glow);
+  }
+
+  .neon-border-orange {
+    border: 1px solid hsl(var(--vaporwave-orange) / 0.5);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .neon-border-pink {
+    border: 1px solid var(--color-accent-primary);
+    opacity: 0.5;
+    box-shadow: var(--shadow-glow);
+  }
+
+  .neon-border-cyan {
+    border: 1px solid var(--color-accent-secondary);
+    opacity: 0.5;
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+/* Retro design tokens and effects from retro theme */
+@layer base {
+  :root {
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Audiowide&display=swap');
+  body { 
+    background: var(--gradient-bg);
+    transition: var(--theme-transition);
+  }
+}
+
+/* Background grid and effects */
+@layer utilities {
+  .vaporwave-grid { 
+    display: var(--effect-grid);
+    position:absolute; bottom:0; left:0; right:0; height:100%; 
+    background-image: 
+      linear-gradient(0deg, transparent 24%, hsl(var(--vaporwave-pink) / 0.3) 25%, hsl(var(--vaporwave-pink) / 0.3) 26%, transparent 27%, transparent 74%, hsl(var(--vaporwave-pink) / 0.3) 75%, hsl(var(--vaporwave-pink) / 0.3) 76%, transparent 77%, transparent), 
+      linear-gradient(90deg, transparent 24%, hsl(var(--vaporwave-cyan) / 0.3) 25%, hsl(var(--vaporwave-cyan) / 0.3) 26%, transparent 27%, transparent 74%, hsl(var(--vaporwave-cyan) / 0.3) 75%, hsl(var(--vaporwave-cyan) / 0.3) 76%, transparent 77%, transparent); 
+    background-size:100px 100px; background-position:center bottom; 
+    transform:perspective(500px) rotateX(60deg); transform-origin:bottom; opacity:.4; 
+    transition: var(--theme-transition);
+  }
+  
+  .neon-glow-pink { 
+    color: var(--color-accent-primary);
+    text-shadow: var(--shadow-glow-strong);
+  }
+  
+  .neon-glow-cyan { 
+    color: var(--color-accent-secondary);
+    text-shadow: var(--shadow-glow);
+  }
+  
+  .neon-border { 
+    border:2px solid var(--color-accent-primary); 
+    box-shadow: var(--shadow-card);
+  }
+  
+  .cyber-card { 
+    background: var(--gradient-card);
+    border:2px solid var(--color-accent-secondary); 
+    box-shadow: var(--shadow-card);
+    transition: var(--theme-transition);
+  }
+  
+  .scanlines { 
+    position:relative; 
+    overflow:hidden; 
+  }
+  
+  .scanlines::after { 
+    content:''; 
+    position:absolute; 
+    inset:0; 
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.1), rgba(0,0,0,.1) 1px, transparent 1px, transparent 3px); 
+    pointer-events:none; 
+    z-index:1000;
+    display: var(--effect-scanlines);
+  }
+  
+  .font-orbitron { font-family: var(--font-heading); }
+  .font-audiowide { font-family: 'Audiowide', cursive; }
+  
+  @keyframes glow-soft {
+    0%, 100% { 
+      filter: brightness(1) drop-shadow(0 0 15px var(--color-accent-primary));
+    }
+    50% { 
+      filter: brightness(1.2) drop-shadow(0 0 30px var(--color-accent-primary));
+    }
+  }
+  
+  .glow-soft {
+    animation: glow-soft 2s ease-in-out infinite;
+  }
+}
+

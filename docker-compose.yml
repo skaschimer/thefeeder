@@ -1,0 +1,152 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Force Docker internal host - containers must use service names, not localhost
+      - DATABASE_URL=postgresql://thefeeder:thefeeder@db:5432/thefeeder
+      - REDIS_URL=redis://redis:6379
+      - WORKER_API_URL=http://worker:3001
+      - WORKER_API_TOKEN=${WORKER_API_TOKEN:-change-me-in-production}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-me-in-production-generate-random-secret}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://feeder.works}
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://feeder.works}
+      - TZ=${TZ:-America/Sao_Paulo}
+      - NEXT_PUBLIC_TZ=${TZ:-America/Sao_Paulo}
+      - LOG_LEVEL=${LOG_LEVEL:-error}
+      - NODE_OPTIONS=${NODE_OPTIONS:---max-old-space-size=256}
+    ports:
+      - "8041:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    env_file:
+      - ./.env
+    ports:
+      - "7388:3001"
+    environment:
+      - NODE_ENV=production
+      # Force Docker internal host - containers must use service names, not localhost
+      - DATABASE_URL=postgresql://thefeeder:thefeeder@db:5432/thefeeder
+      - REDIS_URL=redis://redis:6379
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-noreply@thefeeder.com}
+      - TZ=${TZ:-America/Sao_Paulo}
+      - DIGEST_TIME=${DIGEST_TIME:-09:00}
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://feeder.works}
+      - WORKER_API_PORT=3001
+      - WORKER_API_TOKEN=${WORKER_API_TOKEN:-change-me-in-production}
+      - LOG_LEVEL=${LOG_LEVEL:-error}
+      - NODE_OPTIONS=${NODE_OPTIONS:---max-old-space-size=256}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-thefeeder}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-thefeeder}
+      - POSTGRES_DB=${POSTGRES_DB:-thefeeder}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    command: >
+      postgres
+      -c shared_buffers=64MB
+      -c effective_cache_size=128MB
+      -c maintenance_work_mem=32MB
+      -c work_mem=4MB
+      -c max_connections=20
+      -c autovacuum_vacuum_scale_factor=0.1
+      -c autovacuum_analyze_scale_factor=0.05
+    ports:
+      - "15432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U thefeeder"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "16379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 100mb
+      --maxmemory-policy noeviction
+      --save ""
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+volumes:
+  pgdata:
+  redisdata:
+
+

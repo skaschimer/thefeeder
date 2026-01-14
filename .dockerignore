@@ -1,0 +1,53 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+.next
+out
+dist
+build
+**/.next
+**/dist
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Test
+coverage
+.nyc_output
+**/coverage
+
+# Logs
+logs
+*.log
+
+# Misc
+README.md
+*.md
+LICENSE
+**/*.md
+
+# Docker (keep root Dockerfile, ignore others)
+apps/*/Dockerfile
+frontend/Dockerfile
+docker-compose*.yml
+.dockerignore
+

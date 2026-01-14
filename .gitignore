@@ -1,0 +1,40 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+future.md 
+
+.kiro
+
+# Node.js / Next.js
+node_modules/
+.next/
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+# Note: package-lock.json should be committed for reproducible builds
+# Only ignore root package-lock.json, but commit apps/*/package-lock.json
+/package-lock.json
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose.override.yml
+
+# Misc
+*.bak
+*.tmp

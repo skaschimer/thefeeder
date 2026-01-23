@@ -4,6 +4,7 @@ import { useState, FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/src/components/ThemeToggle";
+import { SiteLogo } from "@/src/components/SiteLogo";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -53,7 +54,7 @@ export default function AdminLoginPage() {
       <div className="relative z-10 w-full max-w-md space-y-6 md:space-y-8 card-admin p-5 md:p-8 backdrop-blur-md mx-2">
         <div className="text-center space-y-3 md:space-y-4">
           <div className="glow-soft flex justify-center">
-            <img src="/logo.png" alt="The Feeder Logo" className="w-14 h-14 md:w-20 md:h-20 opacity-80" />
+            <SiteLogo className="w-14 h-14 md:w-20 md:h-20 opacity-80" alt="The Feeder Logo" />
           </div>
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary neon-glow-pink">Admin Login</h1>
           <p className="text-muted-foreground text-xs md:text-sm">Sign in to manage feeds and subscribers</p>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { SiteLogo } from "@/src/components/SiteLogo";
 
 export default function UnsubscribePage() {
   const params = useParams();
@@ -52,7 +53,7 @@ export default function UnsubscribePage() {
           }}
         >
           <div className="text-center">
-            <img src="/logo.png" alt="TheFeeder Logo" className="w-16 h-16 mx-auto mb-4" />
+            <SiteLogo className="w-16 h-16 mx-auto mb-4" alt="TheFeeder Logo" />
             
             <h1 
               className="text-2xl font-bold mb-4"

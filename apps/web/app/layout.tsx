@@ -87,7 +87,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               (function() {
                 try {
                   const theme = localStorage.getItem('theme') || 'vaporwave';
-                  document.documentElement.setAttribute('data-theme', theme);
+                  const safe = ['vaporwave','clean','directory','catppuccin'].includes(theme) ? theme : 'vaporwave';
+                  document.documentElement.setAttribute('data-theme', safe);
                   if (!localStorage.getItem('theme')) {
                     localStorage.setItem('theme', 'vaporwave');
                   }

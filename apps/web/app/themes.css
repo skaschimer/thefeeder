@@ -126,6 +126,160 @@
   --gradient-cyber: radial-gradient(circle at center, rgba(0, 102, 204, 0.1), transparent);
 }
 
+/* Directory Theme (classic web directory: white, black text, blue links) */
+[data-theme="directory"] {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f8f8;
+  --color-text-primary: #000000;
+  --color-text-secondary: #333333;
+  --color-text-muted: #666666;
+  --color-accent-primary: #0066CC;
+  --color-accent-secondary: #000000;
+  --color-border: #cccccc;
+
+  --font-heading: Georgia, "Times New Roman", ui-serif, serif;
+  --font-body: Georgia, "Times New Roman", ui-serif, serif;
+
+  --shadow-glow: none;
+  --shadow-glow-strong: none;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06);
+
+  --effect-scanlines: none;
+  --effect-grid: none;
+  --effect-stars: none;
+
+  --gradient-bg: #ffffff;
+  --gradient-bg-overlay: transparent;
+  --gradient-card: #fafafa;
+
+  /* Tailwind color variables */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 98%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --primary: 210 100% 40%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 0%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 210 100% 40%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 80%;
+  --input: 0 0% 96%;
+  --ring: 210 100% 40%;
+
+  --vaporwave-pink: 210 100% 40%;
+  --vaporwave-cyan: 0 0% 0%;
+  --vaporwave-purple: 210 100% 50%;
+  --vaporwave-orange: 30 100% 50%;
+
+  --gradient-sunset: linear-gradient(180deg, #0066CC, #004499);
+  --gradient-neon: linear-gradient(135deg, #0066CC, #000000);
+  --gradient-cyber: transparent;
+}
+
+/* Catppuccin Mocha Theme */
+[data-theme="catppuccin"] {
+  --color-bg-primary: #1e1e2e;    /* Base */
+  --color-bg-secondary: #313244;  /* Surface0 */
+  --color-text-primary: #cdd6f4;  /* Text */
+  --color-text-secondary: #bac2de; /* Subtext1 */
+  --color-text-muted: #a6adc8;    /* Subtext0 */
+  --color-accent-primary: #89b4fa;  /* Blue */
+  --color-accent-secondary: #cba6f7; /* Mauve */
+  --color-border: #45475a;        /* Surface1 */
+
+  --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+
+  --shadow-glow: none;
+  --shadow-glow-strong: none;
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.25);
+
+  --effect-scanlines: none;
+  --effect-grid: none;
+  --effect-stars: none;
+
+  --gradient-bg: #1e1e2e;
+  --gradient-bg-overlay: transparent;
+  --gradient-card: #313244;
+
+  /* Tailwind color variables (HSL for Mocha) */
+  --background: 234 16% 12%;
+  --foreground: 226 64% 88%;
+  --card: 234 13% 18%;
+  --card-foreground: 226 64% 88%;
+  --popover: 234 16% 12%;
+  --popover-foreground: 226 64% 88%;
+  --primary: 217 92% 76%;
+  --primary-foreground: 234 16% 12%;
+  --secondary: 270 83% 75%;
+  --secondary-foreground: 234 16% 12%;
+  --muted: 230 15% 30%;
+  --muted-foreground: 227 35% 66%;
+  --accent: 217 92% 76%;
+  --accent-foreground: 234 16% 12%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 226 64% 88%;
+  --border: 234 13% 27%;
+  --input: 234 13% 18%;
+  --ring: 217 92% 76%;
+
+  --vaporwave-pink: 217 92% 76%;
+  --vaporwave-cyan: 217 92% 76%;
+  --vaporwave-purple: 270 83% 75%;
+  --vaporwave-orange: 30 100% 50%;
+
+  --gradient-sunset: linear-gradient(180deg, #89b4fa, #cba6f7);
+  --gradient-neon: linear-gradient(135deg, #89b4fa, #cba6f7);
+  --gradient-cyber: transparent;
+}
+
+[data-theme="catppuccin"] .feed-card {
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+[data-theme="catppuccin"] .feed-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="directory"] a:hover,
+[data-theme="directory"] a:focus-visible {
+  color: var(--color-accent-primary);
+  text-decoration: underline;
+}
+
+[data-theme="directory"] .home-deco {
+  display: none;
+}
+
+/* Toast: themed by data-theme, bottom-right to avoid overlapping header buttons */
+.toast-theme-success {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+}
+.toast-theme-error {
+  background: var(--color-bg-secondary);
+  border-color: hsl(var(--destructive));
+  color: hsl(var(--destructive));
+}
+.toast-theme-warning {
+  background: var(--color-bg-secondary);
+  border-color: hsl(var(--vaporwave-orange));
+  color: hsl(var(--vaporwave-orange));
+}
+.toast-theme-info {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-secondary);
+  color: var(--color-text-primary);
+}
+
 /* Disable transitions on initial load */
 .no-transitions * {
   transition: none !important;

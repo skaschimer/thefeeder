@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/src/hooks/useToast";
 import { ToastContainer } from "./Toast";
+import { SiteLogo } from "./SiteLogo";
 
 /**
  * Format date deterministically to avoid hydration errors
@@ -197,7 +198,7 @@ export default function SubscribersManager({ onSubscriberUpdate }: SubscribersMa
         <div className="text-center py-8 sm:py-10 md:py-12">
           <div className="flex flex-col items-center gap-3 sm:gap-4">
             <div className="glow-soft">
-              <img src="/logo.png" alt="Logo" className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 opacity-70" />
+              <SiteLogo className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 opacity-70" alt="Logo" />
             </div>
             <div className="p-4 sm:p-5 md:p-6 max-w-md mx-2">
               <p className="text-sm sm:text-base md:text-lg font-bold text-primary mb-1.5 sm:mb-2">

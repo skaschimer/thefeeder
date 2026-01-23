@@ -36,7 +36,7 @@ export default function FeedCard({
 }: FeedCardProps) {
   return (
     <article 
-      className="border-2 hover:shadow-[0_0_15px_var(--color-accent-primary)] transition-all duration-300 group h-full flex flex-col"
+      className="feed-card border-2 hover:shadow-[0_0_15px_var(--color-accent-primary)] transition-all duration-300 group h-full flex flex-col"
       style={{
         background: 'var(--color-bg-secondary)',
         borderColor: 'var(--color-border)',

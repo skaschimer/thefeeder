@@ -1,29 +1,29 @@
 import { PrismaClient, Role } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
-import { logger } from "../src/lib/logger";
 
 const prisma = new PrismaClient();
 
+function log(msg: string) {
+  console.log(`[seed] ${msg}`);
+}
+
 async function main() {
-  logger.info("Starting seed...");
+  log("Starting seed...");
 
-  // Create admin user
-  const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
-  const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
-
-  const existingAdmin = await prisma.user.findUnique({
-    where: { email: adminEmail },
-  });
-
-  if (existingAdmin) {
-    logger.info("Admin user already exists");
-    return;
-  }
+  // Create or update admin user so ADMIN_EMAIL/ADMIN_PASSWORD from .env always match
+  const adminEmail = (process.env.ADMIN_EMAIL || "admin@example.com").trim();
+  const adminPassword = (process.env.ADMIN_PASSWORD || "admin123").trim();
 
   const passwordHash = await bcrypt.hash(adminPassword, 10);
 
-  const admin = await prisma.user.create({
-    data: {
+  const admin = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      passwordHash,
+      name: "Admin",
+      role: Role.admin,
+    },
+    create: {
       email: adminEmail,
       name: "Admin",
       passwordHash,
@@ -31,14 +31,12 @@ async function main() {
     },
   });
 
-  logger.info(`Created admin user: ${admin.email}`);
-  logger.info(`Default password: ${adminPassword}`);
-  logger.warn("Please change the password after first login!");
+  log(`Admin user ready: ${admin.email}`);
 }
 
 main()
   .catch((e) => {
-    logger.error("Seed failed", e instanceof Error ? e : new Error(String(e)));
+    console.error("[seed] Failed:", e instanceof Error ? e.message : e);
     process.exit(1);
   })
   .finally(async () => {

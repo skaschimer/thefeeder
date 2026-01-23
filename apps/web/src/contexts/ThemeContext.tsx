@@ -2,7 +2,13 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type Theme = "vaporwave" | "clean";
+export type Theme = "vaporwave" | "clean" | "directory" | "catppuccin";
+
+const THEMES: Theme[] = ["vaporwave", "clean", "directory", "catppuccin"];
+
+function isValidTheme(v: unknown): v is Theme {
+  return typeof v === "string" && THEMES.includes(v as Theme);
+}
 
 interface ThemeContextType {
   theme: Theme;
@@ -19,12 +25,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Load theme from localStorage
     try {
-      const savedTheme = localStorage.getItem("theme") as Theme;
-      if (savedTheme === "vaporwave" || savedTheme === "clean") {
+      const savedTheme = localStorage.getItem("theme");
+      if (isValidTheme(savedTheme)) {
         setThemeState(savedTheme);
         document.documentElement.setAttribute("data-theme", savedTheme);
       } else if (savedTheme) {
-        // Invalid value, reset to default
         localStorage.setItem("theme", "vaporwave");
       }
     } catch (error) {
@@ -34,14 +39,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Listen for storage changes from other tabs
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "theme" && e.newValue) {
-        const newTheme = e.newValue as Theme;
-        if (newTheme === "vaporwave" || newTheme === "clean") {
-          setThemeState(newTheme);
-          document.documentElement.setAttribute("data-theme", newTheme);
-        }
+      if (e.key === "theme" && e.newValue && isValidTheme(e.newValue)) {
+        setThemeState(e.newValue);
+        document.documentElement.setAttribute("data-theme", e.newValue);
       }
     };
 
@@ -69,7 +70,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleTheme = () => {
-    setTheme(theme === "vaporwave" ? "clean" : "vaporwave");
+    const i = THEMES.indexOf(theme);
+    setTheme(THEMES[(i + 1) % THEMES.length]);
   };
 
   // Don't render children until mounted to avoid hydration mismatch

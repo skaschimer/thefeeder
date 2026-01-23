@@ -23,54 +23,31 @@ export default function Toast({ message, type, duration = 5000, onClose }: Toast
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
-  const typeStyles = {
-    success: {
-      bg: "rgba(0, 255, 0, 0.1)",
-      border: "rgba(0, 255, 0, 0.5)",
-      text: "#00ff00",
-    },
-    error: {
-      bg: "rgba(255, 0, 0, 0.1)",
-      border: "rgba(255, 0, 0, 0.5)",
-      text: "#ff006e",
-    },
-    warning: {
-      bg: "rgba(255, 165, 0, 0.1)",
-      border: "rgba(255, 165, 0, 0.5)",
-      text: "#ffa500",
-    },
-    info: {
-      bg: "rgba(0, 217, 255, 0.1)",
-      border: "rgba(0, 217, 255, 0.5)",
-      text: "#00d9ff",
-    },
-  };
-
-  const style = typeStyles[type];
+  const themeClass = {
+    success: "toast-theme-success",
+    error: "toast-theme-error",
+    warning: "toast-theme-warning",
+    info: "toast-theme-info",
+  }[type];
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 p-4 rounded-lg border-2 shadow-lg transition-all duration-300 ${
+      className={`fixed bottom-4 right-4 z-50 p-4 rounded-lg border-2 shadow-lg transition-all duration-300 max-w-[400px] ${themeClass} ${
         isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
       }`}
-      style={{
-        background: style.bg,
-        borderColor: style.border,
-        color: style.text,
-        maxWidth: "400px",
-      }}
     >
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <p className="text-sm font-medium">{message}</p>
         </div>
         <button
+          type="button"
           onClick={() => {
             setIsVisible(false);
             setTimeout(onClose, 300);
           }}
           className="text-lg leading-none opacity-70 hover:opacity-100 transition-opacity"
-          style={{ color: style.text }}
+          aria-label="Fechar"
         >
           ×
         </button>
@@ -86,7 +63,7 @@ interface ToastContainerProps {
 
 export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
       {toasts.map((toast) => (
         <Toast
           key={toast.id}

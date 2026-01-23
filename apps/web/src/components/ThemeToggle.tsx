@@ -1,25 +1,40 @@
 "use client";
 
 import { useTheme } from "@/src/contexts/ThemeContext";
+import type { Theme } from "@/src/contexts/ThemeContext";
+
+const themeLabel: Record<Theme, string> = {
+  vaporwave: "Vaporwave",
+  clean: "Clean",
+  directory: "Diretório",
+  catppuccin: "Catppuccin",
+};
+
+const themeIcon: Record<Theme, string> = {
+  vaporwave: "🎨",
+  clean: "📄",
+  directory: "📑",
+  catppuccin: "🧋",
+};
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
-  
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       toggleTheme();
     }
   };
-  
+
   return (
     <button
       onClick={toggleTheme}
       onKeyDown={handleKeyDown}
       className="theme-toggle"
-      aria-label={`Mudar para tema ${theme === "vaporwave" ? "clean" : "vaporwave"}`}
+      aria-label={`Próximo tema (atual: ${themeLabel[theme]})`}
       aria-live="polite"
-      title={`Tema atual: ${theme === "vaporwave" ? "Vaporwave" : "Clean"}`}
+      title={`Tema atual: ${themeLabel[theme]}`}
       style={{
         display: "flex",
         alignItems: "center",
@@ -39,7 +54,7 @@ export function ThemeToggle() {
           fontSize: "0.875rem",
         }}
       >
-        {theme === "vaporwave" ? "🎨" : "📄"}
+        {themeIcon[theme]}
       </span>
       <span
         style={{

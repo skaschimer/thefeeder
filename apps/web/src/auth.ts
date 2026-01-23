@@ -13,13 +13,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         try {
-          if (!credentials?.email || !credentials?.password) {
+          const rawEmail = credentials?.email as string | undefined;
+          const rawPassword = credentials?.password as string | undefined;
+          const email = rawEmail?.trim();
+          const password = rawPassword?.trim();
+          if (!email || !password) {
             logger.warn("Login attempt with missing credentials");
             return null;
           }
 
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email as string },
+            where: { email },
           });
 
           if (!user) {
@@ -28,10 +32,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const bcrypt = await import("bcryptjs");
-          const isValid = await bcrypt.compare(
-            credentials.password as string,
-            user.passwordHash,
-          );
+          const isValid = await bcrypt.compare(password, user.passwordHash);
 
           if (!isValid) {
             logger.warn("Login attempt: invalid password");

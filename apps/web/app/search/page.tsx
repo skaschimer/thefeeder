@@ -8,6 +8,7 @@ import LoadingSpinner from "@/src/components/LoadingSpinner";
 import { useToast } from "@/src/hooks/useToast";
 import { ToastContainer } from "@/src/components/Toast";
 import { handleApiError } from "@/src/lib/error-handler";
+import { SiteLogo } from "@/src/components/SiteLogo";
 
 interface Item {
   id: string;
@@ -143,7 +144,7 @@ export default function SearchPage() {
       
       <header className="relative z-10 pt-6 md:pt-8 pb-4 md:pb-6 flex flex-col items-center gap-3 md:gap-4">
         <div className="glow-soft">
-          <img src="/logo.png" alt="The Feeder Logo" className="w-16 h-16 md:w-20 md:h-20" />
+          <SiteLogo className="w-16 h-16 md:w-20 md:h-20" alt="The Feeder Logo" />
         </div>
         <h1 className="text-xl md:text-2xl lg:text-3xl font-bold leading-tight" style={{ color: 'var(--color-accent-primary)', fontFamily: 'var(--font-heading)', textShadow: 'var(--shadow-glow-strong)' }}>
           SEARCH ARTICLES

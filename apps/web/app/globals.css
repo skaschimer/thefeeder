@@ -179,5 +179,11 @@
   [data-theme="vaporwave"] .card-admin {
     border-color: hsl(var(--primary) / 0.2);
   }
+  [data-theme="directory"] .btn-admin-primary:hover {
+    box-shadow: none;
+  }
+  [data-theme="directory"] .card-admin {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
 }
 

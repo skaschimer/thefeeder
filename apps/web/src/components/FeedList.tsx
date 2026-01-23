@@ -1,6 +1,9 @@
 "use client";
 
 import FeedCard from "@/src/components/FeedCard";
+import { useTheme } from "@/src/contexts/ThemeContext";
+import { formatDate } from "@/src/lib/date-utils";
+import { sanitizeForDisplay } from "@/src/lib/html-utils";
 
 interface Item {
   id: string;
@@ -24,6 +27,8 @@ interface FeedListProps {
 }
 
 export default function FeedList({ items, loading }: FeedListProps) {
+  const { theme } = useTheme();
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 px-3 sm:px-4 md:px-6">
@@ -71,6 +76,44 @@ export default function FeedList({ items, loading }: FeedListProps) {
           >
             NO FEEDS YET
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (theme === "directory") {
+    return (
+      <div className="relative z-10 px-3 sm:px-4 md:px-6 pb-6">
+        <div className="max-w-3xl mx-auto">
+          <h2
+            className="text-sm font-bold mb-3 border-b pb-1"
+            style={{ color: "var(--color-text-primary)", borderColor: "var(--color-border)" }}
+          >
+            Latest Articles
+          </h2>
+          <ul className="space-y-1 list-none">
+            {items.map((item) => (
+              <li key={item.id}>
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block py-1 text-[var(--color-accent-primary)] underline hover:opacity-80"
+                  dangerouslySetInnerHTML={{ __html: sanitizeForDisplay(item.title) }}
+                />
+                {(item.feed?.title || item.publishedAt) && (
+                  <span
+                    className="block text-xs pl-0 mt-0"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    {[item.feed?.title, item.publishedAt ? formatDate(item.publishedAt) : null]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     );

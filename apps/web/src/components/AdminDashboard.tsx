@@ -7,6 +7,7 @@ import SubscribersManager from "./SubscribersManager";
 import NotificationBell from "./NotificationBell";
 import BrowserAutomationStats from "./BrowserAutomationStats";
 import { ThemeToggle } from "./ThemeToggle";
+import { SiteLogo } from "./SiteLogo";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"feeds" | "subscribers">("feeds");
@@ -46,7 +47,7 @@ export default function AdminDashboard() {
           <header className="mb-4 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <div className="glow-soft flex-shrink-0">
-                <img src="/logo.png" alt="Logo" className="w-10 h-10 md:w-12 md:h-12" />
+                <SiteLogo className="w-10 h-10 md:w-12 md:h-12" alt="Logo" />
               </div>
               <div className="min-w-0 flex-1">
                 <h1 className="text-base sm:text-lg md:text-xl font-bold text-primary neon-glow-pink truncate">

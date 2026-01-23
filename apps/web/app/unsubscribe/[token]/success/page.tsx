@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { SiteLogo } from "@/src/components/SiteLogo";
 
 interface UnsubscribeSuccessPageProps {
   params: Promise<{ token: string }>;
@@ -26,7 +27,7 @@ export default async function UnsubscribeSuccessPage({ params }: UnsubscribeSucc
         <div className="max-w-md w-full text-center">
           {/* Logo */}
           <div className="glow-soft mb-6">
-            <img src="/logo.png" alt="The Feeder Logo" className="w-20 h-20 mx-auto" />
+            <SiteLogo className="w-20 h-20 mx-auto" alt="The Feeder Logo" />
           </div>
 
           {/* Title */}

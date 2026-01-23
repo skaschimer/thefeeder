@@ -3,6 +3,7 @@ import SubscribeForm from "@/src/components/SubscribeForm";
 import Pagination from "@/src/components/Pagination";
 import StarsEffect from "@/src/components/StarsEffect";
 import { ThemeToggle } from "@/src/components/ThemeToggle";
+import { SiteLogo } from "@/src/components/SiteLogo";
 import { getItems, getStats } from "@/src/lib/server-data";
 import type { Metadata } from "next";
 import { getAbsoluteUrl, getDefaultOgImage, truncateMetaText } from "@/src/lib/seo-utils";
@@ -103,16 +104,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       <header className="relative z-10 pt-6 md:pt-8 pb-4 md:pb-6 flex flex-col items-center gap-3 md:gap-4" style={{ transition: 'var(--theme-transition)' }}>
         <div className="glow-soft">
-          <img src="/logo.png" alt="The Feeder Logo" className="w-16 h-16 md:w-20 md:h-20" />
+          <SiteLogo className="w-16 h-16 md:w-20 md:h-20" alt="The Feeder Logo" />
         </div>
         <h1 className="text-xl md:text-2xl lg:text-3xl font-bold neon-glow-pink leading-tight" style={{ color: 'var(--color-accent-primary)', fontFamily: 'var(--font-heading)', textShadow: 'var(--shadow-glow-strong)' }}>
           THE FEEDER
         </h1>
       </header>
 
-      {/* Decorative Elements */}
-      <div className="absolute top-4 left-4 md:top-8 md:left-8 w-12 h-12 md:w-16 md:h-16 border-2 md:border-4 opacity-40 rounded-lg rotate-45 z-0" style={{ borderColor: 'var(--color-accent-primary)', boxShadow: 'var(--shadow-glow)', transition: 'var(--theme-transition)' }} />
-      <div className="absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 border-2 md:border-4 opacity-40 rounded-full z-0" style={{ borderColor: 'var(--color-accent-secondary)', boxShadow: 'var(--shadow-glow)', transition: 'var(--theme-transition)' }} />
+      {/* Decorative Elements (hidden in directory theme) */}
+      <div className="home-deco absolute top-4 left-4 md:top-8 md:left-8 w-12 h-12 md:w-16 md:h-16 border-2 md:border-4 opacity-40 rounded-lg rotate-45 z-0" style={{ borderColor: 'var(--color-accent-primary)', boxShadow: 'var(--shadow-glow)', transition: 'var(--theme-transition)' }} />
+      <div className="home-deco absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 border-2 md:border-4 opacity-40 rounded-full z-0" style={{ borderColor: 'var(--color-accent-secondary)', boxShadow: 'var(--shadow-glow)', transition: 'var(--theme-transition)' }} />
 
       {/* Feed List */}
       <div className="relative z-10 mt-3 sm:mt-4 md:mt-6">

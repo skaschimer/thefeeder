@@ -6,7 +6,7 @@ import { processDailyDigest, DailyDigestJobData } from "./jobs/daily-digest.js";
 import { scheduleFeed } from "./lib/scheduler.js";
 import scheduleRouter from "./api/schedule.js";
 import { monitoringAlertsService } from "./lib/monitoring-alerts.js";
-import { logger } from "./lib/logger.js";
+import { logger, isOperationalFailure } from "./lib/logger.js";
 
 // Configure timezone from environment variable
 const timezone = process.env.TZ || "America/Sao_Paulo";
@@ -58,8 +58,9 @@ const dailyDigestWorker = new Worker<DailyDigestJobData>(
   },
 );
 
-// Worker event handlers - only log failures
+// Worker event handlers - only log failures (skip operational 4xx/not-XML to avoid duplicate logs)
 feedFetchWorker.on("failed", (job: Job<FeedFetchJobData> | undefined, err: Error) => {
+  if (isOperationalFailure(err)) return;
   logger.error(`Feed fetch job ${job?.id} failed`, err);
 });
 

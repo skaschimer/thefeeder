@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getExistingVoterId } from "@/src/lib/voter-id";
 import { cached, cacheKey } from "@/src/lib/cache";
+import { logger } from "@/src/lib/logger";
 
 interface UserVotesResponse {
   votes: Record<string, "like" | "dislike">;
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("[Votes] Error fetching user votes:", error);
+    logger.error("[Votes] Error fetching user votes", error instanceof Error ? error : new Error(String(error)));
     
     // Return empty votes on error (graceful degradation)
     return NextResponse.json({

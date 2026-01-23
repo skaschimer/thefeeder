@@ -45,8 +45,6 @@ export async function fetchWithRetry(
       if (attempt > 1) {
         await randomDelay(minDelay, maxDelay);
       }
-      
-      logger.debug(`Attempt ${attempt}/${retries}: ${url}`);
 
       // Generate realistic headers
       const headers = generateRealisticHeaders();
@@ -70,24 +68,15 @@ export async function fetchWithRetry(
       
       // Remove BOM (Byte Order Mark) if present
       if (text.charCodeAt(0) === 0xFEFF) {
-        logger.debug(`Removing BOM`);
         text = text.substring(1);
       }
       
       // Trim whitespace
-      const originalLength = text.length;
       text = text.trim();
-      if (text.length < originalLength) {
-        logger.debug(`Trimmed ${originalLength - text.length} whitespace chars`);
-      }
       
-      logger.debug(`Success (${text.length} bytes)`);
       return text;
     } catch (error: any) {
       lastError = error;
-      logger.debug(
-        `Attempt ${attempt} failed: ${error.message}`
-      );
 
       // Don't retry on certain errors
       if (
@@ -100,7 +89,6 @@ export async function fetchWithRetry(
       // Wait before retry (exponential backoff)
       if (attempt < retries) {
         const delay = retryDelay * Math.pow(2, attempt - 1);
-        logger.debug(`Waiting ${delay}ms before retry...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -113,22 +101,16 @@ export async function fetchWithRetry(
  * Fetch feed with multiple strategies
  */
 export async function fetchFeed(url: string): Promise<string> {
-  logger.debug(`Starting fetch feed for: ${url}`);
-  
   // Strategy 1: Realistic browser with full headers
   try {
-    logger.debug(`Strategy 1: Realistic browser headers (Chrome/Firefox/Safari)`);
     const result = await fetchWithRetry(url, { 
       retries: 2,
       minDelay: 2000,
       maxDelay: 4000,
     });
-    logger.debug(`Strategy 1 succeeded`);
     return result;
   } catch (error) {
-    logger.debug(
-      `Strategy 1 failed: ${error instanceof Error ? error.message : error}`
-    );
+    // Strategy 1 failed, continue to next
   }
 
   // Add delay between strategies
@@ -136,7 +118,6 @@ export async function fetchFeed(url: string): Promise<string> {
 
   // Strategy 2: Try with different realistic headers
   try {
-    logger.debug(`Strategy 2: Alternative browser profile`);
     const headers = generateRealisticHeaders();
     
     const controller = new AbortController();
@@ -154,20 +135,16 @@ export async function fetchFeed(url: string): Promise<string> {
       
       // Remove BOM if present
       if (text.charCodeAt(0) === 0xFEFF) {
-        logger.debug(`Removing BOM`);
         text = text.substring(1);
       }
       
       // Trim whitespace
       text = text.trim();
       
-      logger.debug(`Strategy 2 succeeded (${text.length} bytes)`);
       return text;
     }
   } catch (error) {
-    logger.debug(
-      `Strategy 2 failed: ${error instanceof Error ? error.message : error}`
-    );
+    // Strategy 2 failed, continue to next
   }
 
   // Add delay between strategies
@@ -175,7 +152,6 @@ export async function fetchFeed(url: string): Promise<string> {
 
   // Strategy 3: Feed reader User-Agent
   try {
-    logger.debug(`Strategy 3: Feed reader User-Agent`);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // Reduced to 10s
     
@@ -196,22 +172,19 @@ export async function fetchFeed(url: string): Promise<string> {
       
       // Remove BOM if present
       if (text.charCodeAt(0) === 0xFEFF) {
-        logger.debug(`Removing BOM`);
         text = text.substring(1);
       }
       
       // Trim whitespace
       text = text.trim();
       
-      logger.debug(`Strategy 3 succeeded (${text.length} bytes)`);
       return text;
     }
   } catch (error) {
-    logger.debug(
-      `Strategy 3 failed: ${error instanceof Error ? error.message : error}`
-    );
+    // Strategy 3 failed
   }
 
+  logger.error(`All fetch strategies failed`, new Error("All fetch strategies failed"), { url });
   throw new Error(
     "All fetch strategies failed - feed may be blocked or inaccessible"
   );

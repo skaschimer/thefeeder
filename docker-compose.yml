@@ -1,4 +1,19 @@
 services:
+  web-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=postgresql://thefeeder:thefeeder@db:5432/thefeeder
+    entrypoint: ["/docker-entrypoint-migrate.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   web:
     build:
       context: .
@@ -9,6 +24,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - HOSTNAME=0.0.0.0
       # Force Docker internal host - containers must use service names, not localhost
       - DATABASE_URL=postgresql://thefeeder:thefeeder@db:5432/thefeeder
       - REDIS_URL=redis://redis:6379
@@ -28,13 +44,22 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      web-migrate:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/health/live || exit 1"]
+      interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 60s
-    restart: unless-stopped
+      start_period: 180s
+    restart: on-failure:3
+    stop_grace_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
     deploy:
       resources:
         limits:
@@ -43,6 +68,10 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
 
   worker:
     build:
@@ -78,7 +107,14 @@ services:
         condition: service_started
       web:
         condition: service_healthy
-    restart: unless-stopped
+    restart: on-failure:3
+    stop_grace_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
     deploy:
       resources:
         limits:
@@ -87,6 +123,10 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
 
   db:
     image: postgres:16-alpine
@@ -110,10 +150,18 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U thefeeder"]
-      interval: 30s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
-    restart: unless-stopped
+      start_period: 10s
+    restart: on-failure:3
+    stop_grace_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
     deploy:
       resources:
         limits:
@@ -122,6 +170,10 @@ services:
         reservations:
           cpus: '0.1'
           memory: 128M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
 
   redis:
     image: redis:7-alpine
@@ -135,7 +187,14 @@ services:
       --save ""
     volumes:
       - redisdata:/data
-    restart: unless-stopped
+    restart: on-failure:3
+    stop_grace_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
     deploy:
       resources:
         limits:
@@ -144,6 +203,10 @@ services:
         reservations:
           cpus: '0.1'
           memory: 64M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
 
 volumes:
   pgdata:

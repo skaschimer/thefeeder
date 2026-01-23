@@ -1,4 +1,5 @@
 import Redis from "ioredis";
+import { logger } from "./logger";
 
 let redisClient: Redis | null = null;
 
@@ -10,7 +11,7 @@ export async function initializeRedis(): Promise<boolean> {
   const redisUrl = process.env.REDIS_URL;
   
   if (!redisUrl) {
-    console.warn("[Cache] REDIS_URL not configured, cache will be disabled");
+    logger.warn("[Cache] REDIS_URL not configured, cache will be disabled");
     return false;
   }
 
@@ -30,21 +31,21 @@ export async function initializeRedis(): Promise<boolean> {
       });
 
       redisClient.on("error", (error) => {
-        console.error("[Cache] Redis error:", error.message);
+        logger.error("[Cache] Redis error", error instanceof Error ? error : new Error(String(error)));
       });
 
       redisClient.on("connect", () => {
-        console.log("[Cache] Redis connected");
+        logger.info("[Cache] Redis connected");
       });
 
       redisClient.on("ready", () => {
-        console.log("[Cache] Redis ready");
+        logger.info("[Cache] Redis ready");
       });
 
       await redisClient.connect();
       return true;
     } catch (error) {
-      console.error("[Cache] Failed to initialize Redis:", error);
+      logger.error("[Cache] Failed to initialize Redis", error instanceof Error ? error : new Error(String(error)));
       return false;
     }
   }
@@ -109,7 +110,7 @@ export async function get<T = any>(key: string): Promise<T | null> {
     }
     return JSON.parse(value) as T;
   } catch (error) {
-    console.error(`[Cache] Error getting key ${key}:`, error);
+    logger.error(`[Cache] Error getting key ${key}`, error instanceof Error ? error : new Error(String(error)), { key });
     return null;
   }
 }
@@ -133,7 +134,7 @@ export async function set(
     await client.setex(key, ttlSeconds, serialized);
     return true;
   } catch (error) {
-    console.error(`[Cache] Error setting key ${key}:`, error);
+    logger.error(`[Cache] Error setting key ${key}`, error instanceof Error ? error : new Error(String(error)), { key });
     return false;
   }
 }
@@ -151,7 +152,7 @@ export async function del(key: string): Promise<boolean> {
     await client.del(key);
     return true;
   } catch (error) {
-    console.error(`[Cache] Error deleting key ${key}:`, error);
+    logger.error(`[Cache] Error deleting key ${key}`, error instanceof Error ? error : new Error(String(error)), { key });
     return false;
   }
 }
@@ -189,7 +190,7 @@ export async function delPattern(pattern: string): Promise<number> {
     const deleted = await client.del(...keys);
     return deleted;
   } catch (error) {
-    console.error(`[Cache] Error deleting pattern ${pattern}:`, error);
+    logger.error(`[Cache] Error deleting pattern ${pattern}`, error instanceof Error ? error : new Error(String(error)), { pattern });
     return 0;
   }
 }
@@ -267,7 +268,7 @@ export async function cached<T>(
 
   // Store in cache (don't await - fire and forget)
   set(key, result, ttlSeconds).catch((error) => {
-    console.error(`[Cache] Error caching result for ${key}:`, error);
+    logger.error(`[Cache] Error caching result for ${key}`, error instanceof Error ? error : new Error(String(error)), { key });
   });
 
   return result;

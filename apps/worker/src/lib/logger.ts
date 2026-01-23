@@ -3,6 +3,8 @@
  * Provides consistent log formatting across the application
  */
 
+import { shouldLog as shouldLogThrottle } from "./log-throttle.js";
+
 export enum LogLevel {
   DEBUG = "debug",
   INFO = "info",
@@ -28,11 +30,20 @@ export interface LogEntry {
 
 class Logger {
   private minLevel: LogLevel;
+  private isProduction: boolean;
+  private readonly MAX_MESSAGE_LENGTH = 500;
+  private readonly MAX_STACK_LINES = 3;
 
   constructor() {
     // Set minimum log level from environment
-    const envLevel = process.env.LOG_LEVEL?.toLowerCase() || "info";
+    const envLevel = process.env.LOG_LEVEL?.toLowerCase() || "error";
     this.minLevel = this.parseLogLevel(envLevel);
+    this.isProduction = process.env.NODE_ENV === "production";
+    
+    // In production, force ERROR level minimum if not already set
+    if (this.isProduction && this.minLevel === LogLevel.DEBUG) {
+      this.minLevel = LogLevel.ERROR;
+    }
   }
 
   private parseLogLevel(level: string): LogLevel {
@@ -46,28 +57,63 @@ class Logger {
       case "error":
         return LogLevel.ERROR;
       default:
-        return LogLevel.INFO;
+        return LogLevel.ERROR;
     }
   }
 
   private shouldLog(level: LogLevel): boolean {
+    // Never log DEBUG in production
+    if (this.isProduction && level === LogLevel.DEBUG) {
+      return false;
+    }
+    
     const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR];
     return levels.indexOf(level) >= levels.indexOf(this.minLevel);
+  }
+
+  private truncateMessage(message: string): string {
+    if (message.length <= this.MAX_MESSAGE_LENGTH) {
+      return message;
+    }
+    return message.substring(0, this.MAX_MESSAGE_LENGTH) + "... [truncated]";
+  }
+
+  private truncateStack(stack?: string): string | undefined {
+    if (!stack) return undefined;
+    
+    if (this.isProduction) {
+      // In production, limit to first 3 lines of stack
+      const lines = stack.split('\n').slice(0, this.MAX_STACK_LINES + 1);
+      return lines.join('\n');
+    }
+    
+    return stack;
   }
 
   private formatLog(entry: LogEntry): string {
     const { timestamp, level, message, context, error } = entry;
     
-    let logLine = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
+    // Truncate message
+    const truncatedMessage = this.truncateMessage(message);
+    let logLine = `[${timestamp}] [${level.toUpperCase()}] ${truncatedMessage}`;
     
-    if (context && Object.keys(context).length > 0) {
-      logLine += ` ${JSON.stringify(context)}`;
+    // In production, skip context to reduce log size
+    if (!this.isProduction && context && Object.keys(context).length > 0) {
+      const contextStr = JSON.stringify(context);
+      // Limit context size too
+      const truncatedContext = contextStr.length > 200 
+        ? contextStr.substring(0, 200) + "... [truncated]" 
+        : contextStr;
+      logLine += ` ${truncatedContext}`;
     }
     
     if (error) {
-      logLine += ` Error: ${error.name}: ${error.message}`;
+      logLine += ` Error: ${error.name}: ${this.truncateMessage(error.message)}`;
       if (error.stack && level === LogLevel.ERROR) {
-        logLine += `\n${error.stack}`;
+        const truncatedStack = this.truncateStack(error.stack);
+        if (truncatedStack) {
+          logLine += `\n${truncatedStack}`;
+        }
       }
     }
     
@@ -77,6 +123,13 @@ class Logger {
   private log(level: LogLevel, message: string, context?: LogContext, error?: Error) {
     if (!this.shouldLog(level)) {
       return;
+    }
+
+    // Apply throttle for ERROR and WARN levels in production
+    if (this.isProduction && (level === LogLevel.ERROR || level === LogLevel.WARN)) {
+      if (!shouldLogThrottle(message, context)) {
+        return; // Throttled, skip logging
+      }
     }
 
     const entry: LogEntry = {
@@ -131,4 +184,15 @@ class Logger {
 
 // Export singleton instance
 export const logger = new Logger();
+
+/** True if the error is an operational/expected failure (4xx, not XML) that should not be logged as ERROR with stack */
+export function isOperationalFailure(err: Error | unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err ?? "");
+  return (
+    /Status code 40\d/.test(msg) ||
+    /not valid XML\/RSS feed/i.test(msg) ||
+    /Content doesn't look like XML/i.test(msg) ||
+    /Invalid XML format/i.test(msg)
+  );
+}
 

@@ -1,6 +1,7 @@
 import { prisma } from "@/src/lib/prisma";
 import { cached, cacheKey } from "@/src/lib/cache";
 import { getExistingVoterId } from "@/src/lib/voter-id";
+import { logger } from "./logger";
 
 /**
  * Server-side data fetching functions
@@ -84,7 +85,7 @@ export async function getItems(limit: number = 20, skip: number = 0) {
       total,
     };
   } catch (error) {
-    console.error("Error fetching items:", error);
+    logger.error("Error fetching items", error instanceof Error ? error : new Error(String(error)));
     return {
       items: [],
       total: 0,
@@ -105,9 +106,6 @@ export async function getStats() {
           prisma.item.count(),
         ]);
 
-        // Log for debugging
-        console.log("[getStats] Real data:", { feeds: feedsCount, items: itemsCount });
-
         // Cap items count at MAX_ITEMS_LIMIT for display
         const displayItemsCount = Math.min(itemsCount, MAX_ITEMS_LIMIT);
 
@@ -117,7 +115,7 @@ export async function getStats() {
           online: 420, // Placeholder
         };
       } catch (error) {
-        console.error("[getStats] Error fetching stats:", error);
+        logger.error("Error fetching stats", error instanceof Error ? error : new Error(String(error)));
         // Return zeros but log the error for debugging
         return {
           feeds: 0,

@@ -1,5 +1,6 @@
 import { getRandomUserAgent } from "./user-agents";
 import Parser from "rss-parser";
+import { logger } from "./logger";
 
 export interface DiscoveredFeed {
   url: string;
@@ -126,7 +127,6 @@ export async function validateFeedDirect(url: string): Promise<FeedValidationRes
   cleanCache();
   const cached = validationCache.get(url);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    console.log(`[Feed Discovery] Cache hit for ${url}`);
     return cached.result;
   }
   
@@ -142,8 +142,6 @@ export async function validateFeedDirect(url: string): Promise<FeedValidationRes
   
   for (let i = 0; i < userAgents.length; i++) {
     try {
-      console.log(`[Feed Discovery] Validating direct feed (attempt ${i + 1}/${userAgents.length}): ${url}`);
-      
       // Create a parser with specific User-Agent for this attempt
       const parserWithUA = new Parser({
         timeout: 10000,
@@ -168,10 +166,6 @@ export async function validateFeedDirect(url: string): Promise<FeedValidationRes
       // Try to parse the feed
       const feed = await parserWithUA.parseURL(url);
       
-      if (!feed.items || feed.items.length === 0) {
-        console.warn(`[Feed Discovery] Feed ${url} has no items`);
-      }
-      
       const feedInfo = extractFeedInfo(feed);
       const result: FeedValidationResult = {
         isValid: true,
@@ -184,16 +178,12 @@ export async function validateFeedDirect(url: string): Promise<FeedValidationRes
         timestamp: Date.now(),
       });
       
-      const duration = Date.now() - startTime;
-      console.log(`[Feed Discovery] ✓ Valid feed found: ${result.feedInfo?.title} (${result.feedInfo?.itemCount} items) - ${duration}ms`);
-      
       return result;
     } catch (error: any) {
       lastError = error;
       
       // If it's a 403, try next User-Agent
       if (error.message?.includes("403") || error.message?.includes("Forbidden")) {
-        console.warn(`[Feed Discovery] Got 403 with User-Agent ${i + 1}, trying next...`);
         continue;
       }
       
@@ -209,27 +199,20 @@ export async function validateFeedDirect(url: string): Promise<FeedValidationRes
   if (lastError) {
     if (lastError.code === "ETIMEDOUT" || lastError.message?.includes("timeout")) {
       errorMessage = "Feed validation timeout";
-      console.error(`[Feed Discovery] ✗ Timeout validating ${url} - ${duration}ms`);
     } else if (lastError.code === "ENOTFOUND") {
       errorMessage = "Feed URL not found";
-      console.error(`[Feed Discovery] ✗ URL not found: ${url} - ${duration}ms`);
     } else if (lastError.code === "ECONNREFUSED") {
       errorMessage = "Connection refused";
-      console.error(`[Feed Discovery] ✗ Connection refused: ${url} - ${duration}ms`);
     } else if (lastError.code === "ECONNRESET" || lastError.code === "EPIPE") {
       errorMessage = "Connection reset by server";
-      console.error(`[Feed Discovery] ✗ Connection reset: ${url} - ${duration}ms`);
     } else if (lastError.code === "CERT_HAS_EXPIRED" || lastError.message?.includes("certificate")) {
       errorMessage = "SSL certificate error";
-      console.error(`[Feed Discovery] ✗ SSL error: ${url} - ${duration}ms`);
     } else if (lastError.message?.includes("403") || lastError.message?.includes("Forbidden")) {
       errorMessage = "Access forbidden (403) - tried multiple User-Agents";
-      console.error(`[Feed Discovery] ✗ Access forbidden after ${userAgents.length} attempts: ${url} - ${duration}ms`);
     } else if (lastError.message?.includes("404") || lastError.message?.includes("Not Found")) {
       errorMessage = "Feed not found (404)";
-      console.error(`[Feed Discovery] ✗ Not found: ${url} - ${duration}ms`);
     } else {
-      console.error(`[Feed Discovery] ✗ Parse error for ${url}: ${lastError.message} - ${duration}ms`, lastError);
+      logger.error(`Parse error validating feed`, lastError instanceof Error ? lastError : new Error(String(lastError)), { url, duration });
     }
   }
   
@@ -263,7 +246,6 @@ export async function validateMultipleFeeds(urls: string[]): Promise<FeedValidat
  */
 export async function discoverFeeds(siteUrl: string): Promise<DiscoveredFeed[]> {
   const discoveredFeeds: DiscoveredFeed[] = [];
-  const startTime = Date.now();
 
   try {
     // Normalize URL
@@ -274,13 +256,9 @@ export async function discoverFeeds(siteUrl: string): Promise<DiscoveredFeed[]> 
 
     const urlObj = new URL(normalizedUrl);
     
-    console.log(`[Feed Discovery] ===== STARTING DISCOVERY FOR: ${normalizedUrl} =====`);
-    
     // LEVEL 1: Try direct feed validation first
-    console.log(`[Feed Discovery] → Level 1: Trying direct validation...`);
     const directValidation = await validateFeedDirect(normalizedUrl);
     if (directValidation.isValid && directValidation.feedInfo) {
-      console.log(`[Feed Discovery] ✓ Level 1 SUCCESS: Direct feed detected!`);
       discoveredFeeds.push({
         url: normalizedUrl,
         title: directValidation.feedInfo.title,
@@ -290,8 +268,6 @@ export async function discoverFeeds(siteUrl: string): Promise<DiscoveredFeed[]> 
         lastItemDate: directValidation.feedInfo.lastItemDate,
         discoveryMethod: "direct",
       });
-      const duration = Date.now() - startTime;
-      console.log(`[Feed Discovery] ===== COMPLETED in ${duration}ms - Found 1 feed (direct) =====`);
       return discoveredFeeds;
     }
     
@@ -323,13 +299,11 @@ export async function discoverFeeds(siteUrl: string): Promise<DiscoveredFeed[]> 
     }
 
     // LEVEL 2: Try to fetch the page and discover feeds via HTML
-    console.log(`[Feed Discovery] → Level 2: Searching HTML for feed links...`);
     const htmlFeeds = await discoverFeedsFromHTML(normalizedUrl);
     discoveredFeeds.push(...htmlFeeds);
 
     // LEVEL 3: If no feeds found in HTML, try common feed paths
     if (discoveredFeeds.length === 0) {
-      console.log(`[Feed Discovery] → Level 3: Trying common feed paths...`);
       const commonFeeds = await discoverCommonFeeds(normalizedUrl);
       discoveredFeeds.push(...commonFeeds);
     }
@@ -341,11 +315,8 @@ export async function discoverFeeds(siteUrl: string): Promise<DiscoveredFeed[]> 
       const bPriority = methodPriority[b.discoveryMethod || "html"] || 99;
       return aPriority - bPriority;
     });
-    
-    const duration = Date.now() - startTime;
-    console.log(`[Feed Discovery] ===== COMPLETED in ${duration}ms - Found ${discoveredFeeds.length} feed(s) =====`);
   } catch (error) {
-    console.error("[Feed Discovery] ✗ Error discovering feeds:", error);
+    logger.error(`Error discovering feeds`, error instanceof Error ? error : new Error(String(error)), { siteUrl });
   }
 
   return discoveredFeeds;
@@ -376,7 +347,7 @@ async function discoverRedditFeed(url: string): Promise<DiscoveredFeed | null> {
       }
     }
   } catch (error) {
-    console.error("Error discovering Reddit feed:", error);
+    logger.error(`Error discovering Reddit feed`, error instanceof Error ? error : new Error(String(error)), { url });
   }
   
   return null;
@@ -444,7 +415,7 @@ async function discoverYouTubeFeeds(url: string): Promise<DiscoveredFeed[]> {
       }
     }
   } catch (error) {
-    console.error("Error discovering YouTube feeds:", error);
+    logger.error(`Error discovering YouTube feeds`, error instanceof Error ? error : new Error(String(error)), { url });
   }
   
   return feeds;
@@ -535,7 +506,7 @@ async function extractYouTubeChannelId(channelUrl: string): Promise<{ channelId:
     
     return { channelId: null, title: null };
   } catch (error) {
-    console.error("Error extracting YouTube channel ID:", error);
+    logger.error(`Error extracting YouTube channel ID`, error instanceof Error ? error : new Error(String(error)), { channelUrl });
     return { channelId: null, title: null };
   }
 }
@@ -652,7 +623,7 @@ async function discoverGitHubFeeds(url: string): Promise<DiscoveredFeed[]> {
       }
     }
   } catch (error) {
-    console.error("Error discovering GitHub feeds:", error);
+    logger.error(`Error discovering GitHub feeds`, error instanceof Error ? error : new Error(String(error)), { url });
   }
   
   return feeds;
@@ -671,7 +642,6 @@ async function discoverFeedsFromHTML(siteUrl: string): Promise<DiscoveredFeed[]>
     });
 
     if (!response.ok) {
-      console.warn(`Failed to fetch HTML from ${siteUrl}: ${response.status} ${response.statusText}`);
       return feeds;
     }
 
@@ -743,7 +713,7 @@ async function discoverFeedsFromHTML(siteUrl: string): Promise<DiscoveredFeed[]>
       }
     }
   } catch (error) {
-    console.error(`Error discovering feeds from HTML for ${siteUrl}:`, error);
+    logger.error(`Error discovering feeds from HTML`, error instanceof Error ? error : new Error(String(error)), { siteUrl });
   }
   
   return feeds;

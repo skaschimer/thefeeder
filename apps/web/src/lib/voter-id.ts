@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { randomUUID } from 'crypto';
+import { logger } from './logger';
 
 const VOTER_ID_COOKIE = 'voter_id';
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 365 days in seconds
@@ -25,7 +26,7 @@ export async function getVoterId(): Promise<string> {
   // If no cookie exists or cookie is invalid, generate new voter ID
   if (!voterId || !isValidUUID(voterId)) {
     if (voterId) {
-      console.warn('[VoterID] Invalid voter ID detected, generating new one');
+      logger.warn('[VoterID] Invalid voter ID detected, generating new one');
     }
     voterId = randomUUID();
     await setVoterId(voterId);

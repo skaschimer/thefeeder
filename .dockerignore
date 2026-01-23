@@ -39,11 +39,15 @@ coverage
 logs
 *.log
 
-# Misc
+# Misc and dev/docs (smaller build context)
 README.md
 *.md
 LICENSE
 **/*.md
+docs/
+plans/
+.cursor/
+.kiro/
 
 # Docker (keep root Dockerfile, ignore others)
 apps/*/Dockerfile

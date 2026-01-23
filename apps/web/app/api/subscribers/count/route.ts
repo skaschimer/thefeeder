@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/src/auth";
 import { prisma } from "@/src/lib/prisma";
 import { Role } from "@prisma/client";
+import { logger } from "@/src/lib/logger";
 
 // GET - Get count of pending subscribers (admin only)
 export async function GET() {
@@ -20,7 +21,7 @@ export async function GET() {
 
     return NextResponse.json({ pending: pendingCount });
   } catch (error) {
-    console.error("Error fetching pending subscriber count:", error);
+    logger.error("Error fetching pending subscriber count", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

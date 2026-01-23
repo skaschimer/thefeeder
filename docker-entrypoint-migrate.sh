@@ -12,8 +12,8 @@ DB_HOST=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):\([^/]*\).*/\1/p' 2>/dev
 DB_PORT=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):\([^/]*\).*/\2/p' 2>/dev/null || echo "5432")
 DB_USER=$(echo "$DATABASE_URL" | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p' 2>/dev/null || echo "thefeeder")
 
-# Wait for database to be ready
-MAX_ATTEMPTS=60
+# Wait for database to be ready (Compose already waits for db healthy; short loop is enough)
+MAX_ATTEMPTS=10
 ATTEMPT=0
 
 while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
@@ -31,6 +31,10 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
   fi
 done
 
-# Start worker
-exec npm start
+# Run database migrations (output visible for debugging failures)
+if ! npx prisma migrate deploy; then
+  echo "ERROR: Database migration failed!"
+  exit 1
+fi
 
+exit 0

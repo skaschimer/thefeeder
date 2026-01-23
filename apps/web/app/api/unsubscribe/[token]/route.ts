@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { verifyUnsubscribeToken } from "@/src/lib/unsubscribe-token";
+import { logger } from "@/src/lib/logger";
 
 // Force Node.js runtime (not Edge)
 export const runtime = 'nodejs';
@@ -42,14 +43,14 @@ export async function POST(
       },
     });
 
-    console.log(`[Unsubscribe] Successfully unsubscribed: ${email}`);
+    logger.info(`[Unsubscribe] Successfully unsubscribed: ${email}`);
 
     return NextResponse.json({
       success: true,
       message: "You have been successfully unsubscribed from TheFeeder daily digest.",
     });
   } catch (error) {
-    console.error("[Unsubscribe] Error:", error);
+    logger.error("[Unsubscribe] Error", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: "Failed to process unsubscribe request" },
       { status: 500 }

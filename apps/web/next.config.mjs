@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: "standalone",
   outputFileTracingRoot: process.cwd(),
   // Ensure static assets are served correctly
   poweredByHeader: false,
@@ -11,9 +12,23 @@ const nextConfig = {
   },
   // Ensure proper asset serving
   assetPrefix: undefined, // Use default Next.js asset serving
-  // Headers for static assets
+  // Headers for static assets and security
   async headers() {
+    const isProd = process.env.NODE_ENV === "production";
+    const securityHeaders = [
+      { key: "X-Frame-Options", value: "DENY" },
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=()" },
+    ];
+    if (isProd && process.env.ENABLE_HSTS === "true") {
+      securityHeaders.push({
+        key: "Strict-Transport-Security",
+        value: "max-age=31536000; includeSubDomains; preload",
+      });
+    }
     const headers = [
+      { source: "/(.*)", headers: securityHeaders },
       {
         source: '/_next/static/:path*',
         headers: [

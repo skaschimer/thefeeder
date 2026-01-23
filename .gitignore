@@ -10,6 +10,7 @@ future.md
 # Node.js / Next.js
 node_modules/
 .next/
+**/tsconfig.tsbuildinfo
 npm-debug.log*
 pnpm-lock.yaml
 yarn.lock
@@ -17,9 +18,10 @@ yarn.lock
 # Only ignore root package-lock.json, but commit apps/*/package-lock.json
 /package-lock.json
 
-# IDEs
+# IDEs / editors
 .vscode/
 .idea/
+.cursor/
 *.swp
 *.swo
 *~

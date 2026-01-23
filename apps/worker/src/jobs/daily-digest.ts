@@ -21,24 +21,33 @@ export async function processDailyDigest(job: Job<DailyDigestJobData>) {
       return { success: true, recipients: 0, items: 0 };
     }
 
-    // Get items from last 24 hours
+    // Get items from last 24 hours: up to 10 most voted, then fill with others until 10
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const items = await prisma.item.findMany({
-      where: {
-        publishedAt: {
-          gte: yesterday,
-        },
-      },
-      include: {
-        feed: true,
-      },
-      orderBy: {
-        publishedAt: "desc",
-      },
-      take: 20, // Limit to 20 most recent items for email digest
+    const dateFilter = { publishedAt: { gte: yesterday } };
+
+    const topByVotes = await prisma.item.findMany({
+      where: dateFilter,
+      include: { feed: true },
+      orderBy: { likes: "desc" },
+      take: 10,
     });
+
+    let items = topByVotes;
+    if (items.length < 10) {
+      const excludeIds = items.map((i) => i.id);
+      const fill = await prisma.item.findMany({
+        where: {
+          ...dateFilter,
+          ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
+        },
+        include: { feed: true },
+        orderBy: { publishedAt: "desc" },
+        take: 10 - items.length,
+      });
+      items = [...items, ...fill];
+    }
 
     if (items.length === 0) {
       logger.info("No items found for digest");

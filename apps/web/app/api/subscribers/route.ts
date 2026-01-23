@@ -5,6 +5,7 @@ import { Role } from "@prisma/client";
 import { rateLimitByIP } from "@/src/lib/rate-limit-redis";
 import { validateRequestBody, validateEmail } from "@/src/lib/payload-validator";
 import { getCorsHeaders } from "@/src/lib/cors";
+import { logger } from "@/src/lib/logger";
 
 // GET - List all subscribers (admin only)
 export async function GET(req: NextRequest) {
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
       headers: getCorsHeaders(req.headers.get("origin")),
     });
   } catch (error) {
-    console.error("Error fetching subscribers:", error);
+    logger.error("Error fetching subscribers", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500, headers: getCorsHeaders(req.headers.get("origin")) },
@@ -127,7 +128,7 @@ export async function POST(req: NextRequest) {
       throw error;
     }
   } catch (error) {
-    console.error("Error creating subscriber:", error);
+    logger.error("Error creating subscriber", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500, headers: getCorsHeaders(req.headers.get("origin")) },

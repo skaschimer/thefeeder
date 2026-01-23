@@ -48,11 +48,9 @@ export default function BrowserAutomationStats({ className = '' }: BrowserAutoma
 
   if (loading) {
     return (
-      <div className={`p-4 rounded border ${className}`} style={{ background: 'var(--color-bg-secondary)', borderColor: 'var(--color-border)' }}>
-        <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--color-accent-primary)' }}>
-          Browser Automation
-        </h3>
-        <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Loading...</p>
+      <div className={`card-admin p-4 ${className}`}>
+        <h3 className="text-sm font-bold mb-3 text-primary">Browser automation</h3>
+        <p className="text-xs text-muted-foreground">Loading…</p>
       </div>
     );
   }
@@ -62,48 +60,40 @@ export default function BrowserAutomationStats({ className = '' }: BrowserAutoma
   }
 
   return (
-    <div className={`p-4 rounded border ${className}`} style={{ background: 'var(--color-bg-secondary)', borderColor: 'var(--color-border)' }}>
-      <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--color-accent-primary)' }}>
-        Browser Automation (Last 7 Days)
-      </h3>
-      
+    <div className={`card-admin p-4 ${className}`}>
+      <h3 className="text-sm font-bold mb-3 text-primary">Browser automation (last 7 days)</h3>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Success Rate</div>
-          <div className="text-lg font-bold" style={{ color: stats.successRate >= 80 ? 'var(--color-accent-primary)' : stats.successRate >= 50 ? '#fbbf24' : '#ef4444' }}>
+          <div className="text-xs text-muted-foreground">Success rate</div>
+          <div
+            className={`text-lg font-bold ${
+              stats.successRate >= 80 ? "text-primary" : stats.successRate >= 50 ? "text-amber-500" : "text-destructive"
+            }`}
+          >
             {stats.successRate}%
           </div>
         </div>
-        
         <div>
-          <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Feeds Using Browser</div>
-          <div className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            {stats.feedsUsingBrowser}
-          </div>
+          <div className="text-xs text-muted-foreground">Feeds using browser</div>
+          <div className="text-lg font-bold text-foreground">{stats.feedsUsingBrowser}</div>
         </div>
-        
         <div>
-          <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Total Attempts</div>
-          <div className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            {stats.totalAttempts}
-          </div>
-          <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          <div className="text-xs text-muted-foreground">Total attempts</div>
+          <div className="text-lg font-bold text-foreground">{stats.totalAttempts}</div>
+          <div className="text-xs text-muted-foreground">
             {stats.successfulAttempts} success / {stats.failedAttempts} failed
           </div>
         </div>
-        
         <div>
-          <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Avg Response Time</div>
-          <div className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            {formatResponseTime(stats.avgResponseTime)}
-          </div>
+          <div className="text-xs text-muted-foreground">Avg response time</div>
+          <div className="text-lg font-bold text-foreground">{formatResponseTime(stats.avgResponseTime)}</div>
         </div>
       </div>
-
       {stats.feedsUsingBrowser > 0 && (
-        <div className="mt-3 p-2 rounded" style={{ background: 'var(--color-bg-primary)', borderColor: 'var(--color-border)' }}>
-          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            🤖 {stats.feedsUsingBrowser} feed{stats.feedsUsingBrowser > 1 ? 's' : ''} require{stats.feedsUsingBrowser === 1 ? 's' : ''} browser automation to bypass blocking
+        <div className="mt-3 p-2 rounded-lg bg-muted/50 border border-border">
+          <p className="text-xs text-muted-foreground">
+            {stats.feedsUsingBrowser} feed{stats.feedsUsingBrowser > 1 ? "s" : ""} require
+            {stats.feedsUsingBrowser === 1 ? "s" : ""} browser automation to bypass blocking.
           </p>
         </div>
       )}

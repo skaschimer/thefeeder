@@ -4,20 +4,24 @@ import { logger } from "../lib/logger.js";
 
 const router = express.Router();
 
-// Middleware for basic auth
+// Middleware for basic auth; in production, WORKER_API_TOKEN must be set (no fallback)
 const requireAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const expectedToken =
+    process.env.NODE_ENV === "production"
+      ? process.env.WORKER_API_TOKEN
+      : process.env.WORKER_API_TOKEN || "change-me-in-production";
+  if (process.env.NODE_ENV === "production" && !expectedToken) {
+    logger.error("WORKER_API_TOKEN is not set in production");
+    return res.status(503).json({ error: "Service unavailable: auth not configured" });
+  }
   const authHeader = req.headers.authorization;
-  const expectedToken = process.env.WORKER_API_TOKEN || "change-me-in-production";
-  
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  
   const token = authHeader.substring(7);
   if (token !== expectedToken) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  
   next();
 };
 

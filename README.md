@@ -224,7 +224,7 @@ Key variables in `.env`:
 # Database
 DATABASE_URL=postgresql://user:pass@localhost:15432/thefeeder
 
-# Redis
+# Redis (in production use auth: redis://:REDIS_PASSWORD@host:6379)
 REDIS_URL=redis://localhost:16379
 
 # NextAuth
@@ -234,9 +234,12 @@ NEXTAUTH_URL=https://feeder.works
 # Site URL
 NEXT_PUBLIC_SITE_URL=https://feeder.works
 
-# Worker API
+# Worker API (WORKER_API_TOKEN is required in production; use a strong secret)
 WORKER_API_URL=http://localhost:7388
 WORKER_API_TOKEN=your-token-here
+
+# CORS (in production set explicit origins, e.g. https://feeder.works,https://www.feeder.works)
+# ALLOWED_ORIGINS=https://feeder.works,https://www.feeder.works
 
 # Timezone
 TZ=America/Sao_Paulo
@@ -258,9 +261,19 @@ WORKER_API_PORT=7388
 # Admin (for seed script)
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=admin123
+
+# Security: enable HSTS only when served over HTTPS (e.g. behind TLS reverse proxy)
+# ENABLE_HSTS=true
 ```
 
 See `.env.example` for all available options.
+
+### Production checklist
+
+- Set **WORKER_API_TOKEN** to a strong secret (e.g. `openssl rand -hex 32`). In production the app and worker refuse to use a default token.
+- Set **ALLOWED_ORIGINS** to the exact origins that may call your APIs (e.g. `https://feeder.works,https://www.feeder.works`). Do not rely on `*` when using cookies/credentials.
+- Use **Redis with authentication** in production: configure Redis with `requirepass` and set **REDIS_URL** to `redis://:password@host:6379`.
+- Use **ENABLE_HSTS=true** only when the site is always served over HTTPS (e.g. behind a TLS reverse proxy).
 
 ---
 

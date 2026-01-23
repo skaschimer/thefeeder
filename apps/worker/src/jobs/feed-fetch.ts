@@ -7,7 +7,7 @@ import { healthTrackingService } from "../lib/health-tracking.js";
 import { autoPauseManager } from "../lib/auto-pause.js";
 import { statusMachine } from "../lib/status-machine.js";
 import { notificationService } from "../lib/notification-service.js";
-import { logger } from "../lib/logger.js";
+import { logger, isOperationalFailure } from "../lib/logger.js";
 
 export interface FeedFetchJobData {
   feedId: string;
@@ -65,13 +65,11 @@ export async function processFeedFetch(job: Job<FeedFetchJobData>) {
     }
 
     if (!feed.isActive) {
-      logger.debug(`Skipping inactive feed: ${feed.title}`);
       return { skipped: true, reason: "inactive" };
     }
 
     // Check if feed is paused
     if (feed.status === 'paused') {
-      logger.debug(`Skipping paused feed: ${feed.title}`);
       return { skipped: true, reason: "paused" };
     }
 
@@ -80,13 +78,10 @@ export async function processFeedFetch(job: Job<FeedFetchJobData>) {
       if (feed.lastFetchedAt) {
         const hoursSinceLastFetch = (Date.now() - feed.lastFetchedAt.getTime()) / (1000 * 60 * 60);
         if (hoursSinceLastFetch < 1) {
-          logger.debug(`Skipping Reddit feed ${feed.title} - fetched ${Math.round(hoursSinceLastFetch * 60)} minutes ago (minimum 60 minutes)`);
           return { skipped: true, reason: "reddit_rate_limit", hoursSinceLastFetch: hoursSinceLastFetch };
         }
       }
     }
-
-    logger.debug(`Fetching feed: ${feed.title} (${feed.url})`);
 
     // Use random user agent for each fetch
     const userAgent = getRandomUserAgent();
@@ -205,8 +200,6 @@ export async function processFeedFetch(job: Job<FeedFetchJobData>) {
     // Clean up old items if total exceeds 50k
     await cleanupOldItems();
 
-    logger.debug(`Feed fetch success: ${feed.title} (${itemsCreated} created, ${itemsUpdated} updated, ${responseTime}ms)`);
-
     return {
       success: true,
       itemsCreated,
@@ -299,7 +292,12 @@ export async function processFeedFetch(job: Job<FeedFetchJobData>) {
       statusCode,
     });
 
-    logger.error(`Feed fetch failed: ${feedId} (${errorType}, ${responseTime}ms)`, error);
+    if (isOperationalFailure(error)) {
+      const reason = statusCode ? String(statusCode) : (errorMessage.includes("not valid XML") ? "not XML" : "parse failed");
+      logger.warn(`Feed fetch failed (${reason}): ${feedId} ${feed?.url ?? ""}`, { feedId, feedUrl: feed?.url });
+    } else {
+      logger.error(`Feed fetch failed: ${feedId} (${errorType}, ${responseTime}ms)`, error);
+    }
     throw error;
   }
 }
@@ -342,8 +340,6 @@ async function cleanupOldItems() {
           where: { id: { in: batch } },
         });
       }
-
-      logger.debug(`Cleaned up ${oldestItems.length} old items (total was ${totalCount}, now ${totalCount - oldestItems.length})`);
     }
   } catch (error) {
     logger.error("Error cleaning up old items", error as Error);

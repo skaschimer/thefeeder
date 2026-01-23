@@ -52,6 +52,17 @@ npm run test:watch
 
 **Note:** Test framework will be implemented in a future phase. Currently, manual testing is recommended.
 
+## Security and dependencies
+
+Run `npm audit` in the web and worker apps and fix vulnerabilities when reasonable:
+
+```bash
+cd apps/web && npm audit
+cd apps/worker && npm audit
+```
+
+Document any accepted risks or deferred fixes in your PR.
+
 ## Code Style
 
 We use ESLint and TypeScript for code quality:

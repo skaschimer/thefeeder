@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/src/lib/prisma";
 import { Role } from "@prisma/client";
+import { logger } from "@/src/lib/logger";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -13,7 +14,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) {
-            console.log("[Auth] Missing credentials");
+            logger.warn("Login attempt with missing credentials");
             return null;
           }
 
@@ -22,7 +23,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
 
           if (!user) {
-            console.log("[Auth] User not found:", credentials.email);
+            logger.warn("Login attempt: user not found");
             return null;
           }
 
@@ -33,12 +34,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           );
 
           if (!isValid) {
-            console.log("[Auth] Invalid password for:", credentials.email);
+            logger.warn("Login attempt: invalid password");
             return null;
           }
 
-          console.log("[Auth] User authorized:", user.email);
-
+          logger.info("Login successful");
           return {
             id: user.id,
             email: user.email,
@@ -46,7 +46,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             role: user.role,
           };
         } catch (error) {
-          console.error("[Auth] Error in authorize:", error);
+          logger.error("Auth authorize error", error instanceof Error ? error : new Error(String(error)));
           return null;
         }
       },

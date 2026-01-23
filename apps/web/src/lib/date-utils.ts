@@ -8,6 +8,8 @@
  * Both default to "America/Sao_Paulo" if not set
  */
 
+import { logger } from "./logger";
+
 // Get timezone from environment variable
 // In Next.js, server-side can use process.env.TZ directly
 // Client-side needs NEXT_PUBLIC_TZ (set in docker-compose.yml and .env)
@@ -37,7 +39,7 @@ export function formatDate(dateString: string | Date | null | undefined): string
       year: "numeric",
     });
   } catch (error) {
-    console.error("Error formatting date:", error);
+    logger.error("Error formatting date", error instanceof Error ? error : new Error(String(error)));
     return "";
   }
 }
@@ -66,7 +68,7 @@ export function formatDateTime(dateString: string | Date | null | undefined): st
       hour12: false,
     });
   } catch (error) {
-    console.error("Error formatting date/time:", error);
+    logger.error("Error formatting date/time", error instanceof Error ? error : new Error(String(error)));
     return "";
   }
 }
@@ -96,7 +98,7 @@ export function formatDateTimeFull(dateString: string | Date | null | undefined)
       hour12: false,
     });
   } catch (error) {
-    console.error("Error formatting full date/time:", error);
+    logger.error("Error formatting full date/time", error instanceof Error ? error : new Error(String(error)));
     return "";
   }
 }
@@ -134,7 +136,7 @@ export function formatRelativeTime(dateString: string | Date | null | undefined)
       return formatDate(date);
     }
   } catch (error) {
-    console.error("Error formatting relative time:", error);
+    logger.error("Error formatting relative time", error instanceof Error ? error : new Error(String(error)));
     return "";
   }
 }

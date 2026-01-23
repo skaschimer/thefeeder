@@ -95,12 +95,8 @@ export default function SubscribersManager({ onSubscriberUpdate }: SubscribersMa
   if (loading) {
     return (
       <div className="text-center py-8">
-        <div className="inline-block">
-          <div className="cyber-card border-2 border-vaporwave-cyan/50 p-6">
-            <p className="text-xs md:text-sm text-vaporwave-cyan neon-glow-cyan uppercase tracking-wider animate-pulse">
-              LOADING...
-            </p>
-          </div>
+        <div className="inline-block card-admin p-6">
+          <p className="text-sm text-muted-foreground animate-pulse">Loading…</p>
         </div>
       </div>
     );
@@ -113,19 +109,18 @@ export default function SubscribersManager({ onSubscriberUpdate }: SubscribersMa
     <div>
       <ToastContainer toasts={toasts} onRemove={removeToast} />
       <div className="mb-4">
-        <h2 className="text-base md:text-lg font-bold text-vaporwave-cyan neon-glow-cyan uppercase tracking-wider mb-3">Subscribers</h2>
-        <div className="flex flex-wrap gap-3 text-xs">
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="w-1.5 h-1.5 bg-vaporwave-purple rounded-full animate-pulse" />
-            Pending: <span className="text-vaporwave-purple font-bold">{pendingCount}</span>
+        <h2 className="text-base md:text-lg font-bold text-primary mb-3">Subscribers</h2>
+        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+            Pending: <span className="text-primary font-bold">{pendingCount}</span>
           </span>
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="w-1.5 h-1.5 bg-vaporwave-cyan rounded-full animate-pulse" />
-            Approved: <span className="text-vaporwave-cyan font-bold">{approvedCount}</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-secondary rounded-full" />
+            Approved: <span className="text-secondary font-bold">{approvedCount}</span>
           </span>
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="w-1.5 h-1.5 bg-vaporwave-pink rounded-full" />
-            Total: <span className="text-vaporwave-pink font-bold">{subscribers.length}</span>
+          <span className="flex items-center gap-1.5">
+            Total: <span className="text-foreground font-bold">{subscribers.length}</span>
           </span>
         </div>
       </div>
@@ -134,46 +129,30 @@ export default function SubscribersManager({ onSubscriberUpdate }: SubscribersMa
         {subscribers.map((subscriber) => (
           <div
             key={subscriber.id}
-            className={`cyber-card border-2 ${
-              subscriber.status === "approved"
-                ? "border-vaporwave-cyan/50"
-                : subscriber.status === "pending"
-                  ? "border-vaporwave-purple/50"
-                  : "border-destructive/50 opacity-70"
-            } p-3 md:p-4 transition-all`}
-            style={{ transition: 'var(--theme-transition)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-card)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-card)'; }}
+            className={`card-admin p-3 md:p-4 ${subscriber.status === "rejected" ? "opacity-70" : ""}`}
           >
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
               <div className="flex-1">
-                <h3 className="font-bold text-primary neon-glow-pink text-sm md:text-base mb-1">{subscriber.name}</h3>
+                <h3 className="font-bold text-primary text-sm md:text-base mb-1">{subscriber.name}</h3>
                 <p className="text-xs text-muted-foreground mb-2 break-all">{subscriber.email}</p>
-                <div className="flex flex-wrap gap-3 text-[10px] md:text-xs text-vaporwave-cyan/70">
-                  <span className="flex items-center gap-1">
-                    <span className="w-1 h-1 bg-vaporwave-cyan rounded-full" />
+                <div className="flex flex-wrap gap-3 text-[10px] md:text-xs text-muted-foreground">
+                  <span>
                     Status:{" "}
                     <span
-                      className={`font-bold uppercase ${
+                      className={`font-bold ${
                         subscriber.status === "approved"
-                          ? "text-vaporwave-cyan"
+                          ? "text-primary"
                           : subscriber.status === "pending"
-                            ? "text-vaporwave-purple"
+                            ? "text-muted-foreground"
                             : "text-destructive"
                       }`}
                     >
                       {subscriber.status}
                     </span>
                   </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-1 h-1 bg-vaporwave-pink rounded-full" />
-                    Joined: {formatDate(subscriber.createdAt)}
-                  </span>
+                  <span>Joined: {formatDate(subscriber.createdAt)}</span>
                   {subscriber.approvedAt && (
-                    <span className="flex items-center gap-1">
-                      <span className="w-1 h-1 bg-vaporwave-purple rounded-full" />
-                      Approved: {formatDate(subscriber.approvedAt)}
-                    </span>
+                    <span>Approved: {formatDate(subscriber.approvedAt)}</span>
                   )}
                 </div>
               </div>
@@ -182,19 +161,13 @@ export default function SubscribersManager({ onSubscriberUpdate }: SubscribersMa
                   <>
                     <button
                       onClick={() => handleUpdateStatus(subscriber.id, "approved")}
-                      className="flex-1 sm:flex-initial min-h-[44px] px-3 py-1.5 text-xs sm:text-sm bg-vaporwave-cyan/10 text-vaporwave-cyan/90 border border-vaporwave-cyan/40 rounded hover:bg-vaporwave-cyan/20 hover:border-vaporwave-cyan/60 transition-all uppercase tracking-wider font-normal touch-manipulation"
-                      style={{ transition: 'var(--theme-transition)' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-glow)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
+                      className="btn-admin btn-admin-primary flex-1 sm:flex-initial"
                     >
                       Approve
                     </button>
                     <button
                       onClick={() => handleUpdateStatus(subscriber.id, "rejected")}
-                      className="flex-1 sm:flex-initial min-h-[44px] px-3 py-1.5 text-xs sm:text-sm bg-destructive/10 text-destructive/90 border border-destructive/40 rounded hover:bg-destructive/20 hover:border-destructive/60 transition-all uppercase tracking-wider font-normal touch-manipulation"
-                      style={{ transition: 'var(--theme-transition)' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-glow)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
+                      className="btn-admin btn-admin-destructive flex-1 sm:flex-initial"
                     >
                       Reject
                     </button>
@@ -203,17 +176,14 @@ export default function SubscribersManager({ onSubscriberUpdate }: SubscribersMa
                 {subscriber.status === "approved" && (
                   <button
                     onClick={() => handleUpdateStatus(subscriber.id, "pending")}
-                    className="flex-1 sm:flex-initial min-h-[44px] px-3 py-1.5 text-xs sm:text-sm bg-vaporwave-purple/10 text-vaporwave-purple/90 border border-vaporwave-purple/40 rounded hover:bg-vaporwave-purple/20 hover:border-vaporwave-purple/60 transition-all uppercase tracking-wider font-normal touch-manipulation"
-                    style={{ transition: 'var(--theme-transition)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-glow)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
+                    className="btn-admin btn-admin-secondary flex-1 sm:flex-initial"
                   >
                     Revoke
                   </button>
                 )}
                 <button
                   onClick={() => handleDelete(subscriber.id)}
-                  className="flex-1 sm:flex-initial min-h-[44px] px-3 py-1.5 text-xs sm:text-sm bg-destructive/10 text-destructive/90 border border-destructive/40 rounded hover:bg-destructive/20 hover:border-destructive/60 hover:shadow-[0_0_6px_hsl(0_84%_60%_/_0.3)] transition-all uppercase tracking-wider font-normal touch-manipulation"
+                  className="btn-admin btn-admin-destructive flex-1 sm:flex-initial"
                 >
                   Delete
                 </button>
@@ -230,11 +200,11 @@ export default function SubscribersManager({ onSubscriberUpdate }: SubscribersMa
               <img src="/logo.png" alt="Logo" className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 opacity-70" />
             </div>
             <div className="p-4 sm:p-5 md:p-6 max-w-md mx-2">
-              <p className="text-sm sm:text-base md:text-lg font-bold text-primary neon-glow-pink uppercase tracking-wider mb-1.5 sm:mb-2">
-                NO SUBSCRIBERS YET
+              <p className="text-sm sm:text-base md:text-lg font-bold text-primary mb-1.5 sm:mb-2">
+                No subscribers yet
               </p>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Subscribers will appear here once they sign up
+                Subscribers will appear here once they sign up.
               </p>
             </div>
           </div>

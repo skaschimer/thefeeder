@@ -49,7 +49,7 @@ export default function AdminDashboard() {
                 <img src="/logo.png" alt="Logo" className="w-10 h-10 md:w-12 md:h-12" />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-base sm:text-lg md:text-xl font-bold text-primary neon-glow-pink uppercase tracking-wider truncate">
+                <h1 className="text-base sm:text-lg md:text-xl font-bold text-primary neon-glow-pink truncate">
                   Admin Dashboard
                 </h1>
                 <p className="text-muted-foreground text-xs mt-0.5 truncate">Manage feeds and subscribers</p>
@@ -60,9 +60,9 @@ export default function AdminDashboard() {
               <NotificationBell />
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className="min-h-[44px] px-3 py-1.5 text-xs sm:text-sm bg-destructive/10 text-destructive/90 border border-destructive/40 rounded hover:bg-destructive/20 hover:border-destructive/60 transition-all uppercase tracking-wider font-normal flex-shrink-0 w-full sm:w-auto touch-manipulation"
+                className="btn-admin btn-admin-destructive flex-shrink-0 w-full sm:w-auto"
               >
-                Sign Out
+                Sign out
               </button>
             </div>
           </header>
@@ -76,65 +76,21 @@ export default function AdminDashboard() {
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setActiveTab("feeds")}
-              className={`min-h-[44px] px-3 py-1.5 text-xs sm:text-sm rounded transition-all uppercase tracking-wider font-normal border touch-manipulation ${
-                activeTab === "feeds"
-                  ? "shadow-[var(--shadow-glow)]"
-                  : ""
+              className={`btn-admin border rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                activeTab === "feeds" ? "btn-admin-primary shadow-[var(--shadow-glow)]" : "btn-admin-secondary"
               }`}
-              style={{
-                backgroundColor: activeTab === "feeds" ? 'hsl(var(--vaporwave-pink) / 0.2)' : 'hsl(var(--card) / 0.3)',
-                color: activeTab === "feeds" ? 'hsl(var(--vaporwave-pink))' : 'var(--color-text-muted)',
-                borderColor: activeTab === "feeds" ? 'hsl(var(--vaporwave-pink) / 0.6)' : 'hsl(var(--vaporwave-pink) / 0.2)',
-                transition: 'var(--theme-transition)'
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== "feeds") {
-                  e.currentTarget.style.backgroundColor = 'hsl(var(--card) / 0.5)';
-                  e.currentTarget.style.borderColor = 'hsl(var(--vaporwave-pink) / 0.4)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== "feeds") {
-                  e.currentTarget.style.backgroundColor = 'hsl(var(--card) / 0.3)';
-                  e.currentTarget.style.borderColor = 'hsl(var(--vaporwave-pink) / 0.2)';
-                }
-              }}
             >
               Feeds
             </button>
             <button
               onClick={() => setActiveTab("subscribers")}
-              className={`relative min-h-[44px] px-3 py-1.5 text-xs sm:text-sm rounded transition-all uppercase tracking-wider font-normal border touch-manipulation ${
-                activeTab === "subscribers"
-                  ? "shadow-[var(--shadow-glow)]"
-                  : ""
+              className={`btn-admin relative border rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                activeTab === "subscribers" ? "btn-admin-primary shadow-[var(--shadow-glow)]" : "btn-admin-secondary"
               }`}
-              style={{
-                backgroundColor: activeTab === "subscribers" ? 'hsl(var(--vaporwave-pink) / 0.2)' : 'hsl(var(--card) / 0.3)',
-                color: activeTab === "subscribers" ? 'hsl(var(--vaporwave-pink))' : 'var(--color-text-muted)',
-                borderColor: activeTab === "subscribers" ? 'hsl(var(--vaporwave-pink) / 0.6)' : 'hsl(var(--vaporwave-pink) / 0.2)',
-                transition: 'var(--theme-transition)'
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== "subscribers") {
-                  e.currentTarget.style.backgroundColor = 'hsl(var(--card) / 0.5)';
-                  e.currentTarget.style.borderColor = 'hsl(var(--vaporwave-pink) / 0.4)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== "subscribers") {
-                  e.currentTarget.style.backgroundColor = 'hsl(var(--card) / 0.3)';
-                  e.currentTarget.style.borderColor = 'hsl(var(--vaporwave-pink) / 0.2)';
-                }
-              }}
             >
               Subscribers
               {pendingCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-primary-foreground text-[9px] font-medium flex items-center justify-center border border-primary animate-pulse" style={{
-                  backgroundColor: 'hsl(var(--vaporwave-cyan))',
-                  boxShadow: 'var(--shadow-glow)',
-                  transition: 'var(--theme-transition)'
-                }}>
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-medium flex items-center justify-center border border-primary/30">
                   {pendingCount > 99 ? "99+" : pendingCount}
                 </span>
               )}
@@ -142,10 +98,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Content */}
-          <div className="cyber-card border-2 p-4 md:p-5 backdrop-blur-md" style={{
-            borderColor: 'var(--color-accent-secondary)',
-            transition: 'var(--theme-transition)'
-          }}>
+          <div className="card-admin p-4 md:p-5 backdrop-blur-md">
             {activeTab === "feeds" && <FeedsManager />}
             {activeTab === "subscribers" && <SubscribersManager onSubscriberUpdate={fetchPendingCount} />}
           </div>

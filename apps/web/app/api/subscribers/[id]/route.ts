@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/auth";
 import { prisma } from "@/src/lib/prisma";
 import { Role, SubscriptionStatus } from "@prisma/client";
+import { logger } from "@/src/lib/logger";
 
 // PUT - Update subscriber status (admin only)
 export async function PUT(
@@ -46,7 +47,7 @@ export async function PUT(
     if (error.code === "P2025") {
       return NextResponse.json({ error: "Subscriber not found" }, { status: 404 });
     }
-    console.error("Error updating subscriber:", error);
+    logger.error("Error updating subscriber", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -77,7 +78,7 @@ export async function DELETE(
     if (error.code === "P2025") {
       return NextResponse.json({ error: "Subscriber not found" }, { status: 404 });
     }
-    console.error("Error deleting subscriber:", error);
+    logger.error("Error deleting subscriber", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

@@ -1,4 +1,5 @@
 import { createHmac } from "crypto";
+import { logger } from "./logger";
 
 /**
  * Get the secret key for unsubscribe tokens
@@ -68,7 +69,7 @@ export async function verifyUnsubscribeToken(token: string): Promise<string | nu
     
     return null;
   } catch (error) {
-    console.error("[Unsubscribe Token] Error verifying token:", error);
+    logger.error("[Unsubscribe Token] Error verifying token", error instanceof Error ? error : new Error(String(error)), { token: token.slice(0, 8) + "..." });
     return null;
   }
 }

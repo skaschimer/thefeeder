@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getHealthStatus as getRedisHealth } from "@/src/lib/cache";
+import { logger } from "@/src/lib/logger";
 
 export interface HealthCheckResponse {
   status: "healthy" | "degraded" | "unhealthy";
@@ -140,7 +141,7 @@ export async function GET() {
       ).length;
     } catch (error: any) {
       // Metrics failure doesn't affect health status
-      console.error("[Health Check] Error fetching metrics:", error);
+      logger.error("[Health Check] Error fetching metrics", error instanceof Error ? error : new Error(String(error)));
     }
   }
 

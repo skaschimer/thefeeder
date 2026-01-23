@@ -1,4 +1,5 @@
 import { get, set } from "./cache";
+import { logger } from "./logger";
 
 interface RateLimitConfig {
   maxRequests: number;
@@ -69,7 +70,7 @@ export async function rateLimitRedis(
   } catch (error) {
     // If Redis fails, fall back to allowing the request
     // This prevents Redis issues from breaking the app
-    console.error("[Rate Limit] Redis error, allowing request:", error);
+    logger.error("Redis error in rate limiting, allowing request", error instanceof Error ? error : new Error(String(error)));
     return {
       allowed: true,
       remaining: maxRequests,

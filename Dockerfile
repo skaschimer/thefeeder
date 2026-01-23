@@ -96,7 +96,7 @@ COPY apps/web/prisma ./prisma
 RUN npx prisma generate
 
 # ============================================
-# Web App Production Image
+# Web App Production Image (standalone)
 # ============================================
 FROM node:20-alpine AS web
 WORKDIR /app
@@ -105,33 +105,21 @@ ENV NODE_ENV=production
 # Install OpenSSL for Prisma runtime, postgresql-client for pg_isready, and wget for healthcheck
 RUN apk add --no-cache openssl postgresql-client wget
 
-# Copy package files
-COPY --from=build-web /app/package.json ./package.json
-COPY --from=build-web /app/package-lock.json* ./package-lock.json
-
-# Copy node_modules from build-web (includes generated Prisma Client)
-COPY --from=build-web /app/node_modules ./node_modules
-
-# Remove dev dependencies but keep Prisma Client
-# Install tsx as production dependency (needed for seed) BEFORE prune
-# This ensures tsx is available and accessible via npx
-RUN npm install --save-prod --no-audit tsx && \
-    npm prune --production --omit=dev --no-audit && \
-    npm cache clean --force
-
-# Copy build artifacts and runtime files
-COPY --from=build-web /app/.next ./.next
+# Standalone output: only server, static assets, and public
+COPY --from=build-web /app/.next/standalone ./
+COPY --from=build-web /app/.next/static ./.next/static
 COPY --from=build-web /app/public ./public
-COPY --from=build-web /app/next.config.mjs ./next.config.mjs
-COPY --from=build-web /app/prisma ./prisma
-COPY --from=build-web /app/src ./src
-COPY --from=build-web /app/middleware.ts ./middleware.ts
 
-# Copy entrypoint script and fix line endings (CRLF to LF for Windows compatibility)
+# Prisma schema and migrations for entrypoint (migrate + seed)
+COPY --from=build-web /app/prisma ./prisma
+COPY --from=build-web /app/package.json ./package.json
+RUN npm install prisma tsx --no-save --no-audit && npm cache clean --force
+
+# Copy entrypoint scripts and fix line endings (CRLF to LF for Windows compatibility)
 COPY docker-entrypoint-web.sh /docker-entrypoint-web.sh
-RUN sed -i.bak 's/\r$//' /docker-entrypoint-web.sh && \
-    rm -f /docker-entrypoint-web.sh.bak && \
-    chmod +x /docker-entrypoint-web.sh
+COPY docker-entrypoint-migrate.sh /docker-entrypoint-migrate.sh
+RUN sed -i.bak 's/\r$//' /docker-entrypoint-web.sh && rm -f /docker-entrypoint-web.sh.bak && chmod +x /docker-entrypoint-web.sh && \
+    sed -i.bak 's/\r$//' /docker-entrypoint-migrate.sh && rm -f /docker-entrypoint-migrate.sh.bak && chmod +x /docker-entrypoint-migrate.sh
 
 EXPOSE 3000
 ENTRYPOINT ["/docker-entrypoint-web.sh"]

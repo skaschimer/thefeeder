@@ -1,10 +1,11 @@
 import { PrismaClient, Role } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
+import { logger } from "../src/lib/logger";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Starting seed...");
+  logger.info("Starting seed...");
 
   // Create admin user
   const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
@@ -15,7 +16,7 @@ async function main() {
   });
 
   if (existingAdmin) {
-    console.log("✅ Admin user already exists");
+    logger.info("Admin user already exists");
     return;
   }
 
@@ -30,14 +31,14 @@ async function main() {
     },
   });
 
-  console.log("✅ Created admin user:", admin.email);
-  console.log("📝 Default password:", adminPassword);
-  console.log("⚠️  Please change the password after first login!");
+  logger.info(`Created admin user: ${admin.email}`);
+  logger.info(`Default password: ${adminPassword}`);
+  logger.warn("Please change the password after first login!");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    logger.error("Seed failed", e instanceof Error ? e : new Error(String(e)));
     process.exit(1);
   })
   .finally(async () => {

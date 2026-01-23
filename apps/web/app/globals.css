@@ -63,6 +63,8 @@
 @layer base {
   :root {
     --radius: 1rem;
+    --admin-btn-radius: 0.5rem;
+    --admin-border: 1px;
   }
 }
 
@@ -138,6 +140,44 @@
   
   .glow-soft {
     animation: glow-soft 2s ease-in-out infinite;
+  }
+}
+
+/* Admin UI tokens and utilities (theme-agnostic) */
+@layer components {
+  .btn-admin {
+    @apply border rounded-lg px-4 py-2 text-sm font-medium transition min-h-[40px] inline-flex items-center justify-center;
+    border-width: var(--admin-border);
+  }
+  .btn-admin-primary {
+    @apply bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 hover:border-primary/50;
+  }
+  [data-theme="vaporwave"] .btn-admin-primary:hover {
+    box-shadow: var(--shadow-glow);
+  }
+  .btn-admin-secondary {
+    @apply bg-muted border-border text-foreground hover:bg-muted/80 hover:border-muted-foreground/30;
+  }
+  .btn-admin-ghost {
+    @apply bg-transparent border-border/50 text-foreground hover:bg-muted/50 hover:border-border;
+  }
+  .btn-admin-destructive {
+    @apply bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/20 hover:border-destructive/50;
+  }
+  .input-admin {
+    @apply border rounded-lg px-3 py-2 text-sm bg-background transition focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary;
+    border-color: hsl(var(--border));
+  }
+  .label-admin {
+    @apply block text-xs font-medium text-muted-foreground;
+  }
+  .card-admin {
+    @apply rounded-lg border bg-card shadow-sm;
+    border-width: var(--admin-border);
+    border-color: hsl(var(--border));
+  }
+  [data-theme="vaporwave"] .card-admin {
+    border-color: hsl(var(--primary) / 0.2);
   }
 }
 

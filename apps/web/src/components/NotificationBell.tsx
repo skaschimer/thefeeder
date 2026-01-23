@@ -71,7 +71,7 @@ export default function NotificationBell() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded hover:bg-opacity-10 transition-colors"
+        className="relative flex items-center justify-center min-h-[44px] min-w-[44px] p-2 rounded hover:bg-opacity-10 transition-colors"
         style={{ color: 'var(--color-text-primary)' }}
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +89,7 @@ export default function NotificationBell() {
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-80 rounded-lg shadow-lg border z-50 max-h-96 overflow-y-auto"
+          className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-lg shadow-lg border z-50 max-h-96 overflow-y-auto"
           style={{ background: 'var(--color-bg-primary)', borderColor: 'var(--color-border)' }}
         >
           <div className="p-3 border-b" style={{ borderColor: 'var(--color-border)' }}>

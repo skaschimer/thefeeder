@@ -196,25 +196,26 @@ export default function SearchPage() {
 
             {/* Pagination */}
             {total > itemsPerPage && (
-              <div className="mt-6 flex justify-center gap-2">
+              <div className="mt-6 flex flex-wrap justify-center items-center gap-2 sm:gap-3 px-3 sm:px-4">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="min-h-[44px] px-3 sm:px-4 py-2 text-xs sm:text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     borderColor: "var(--color-border)",
                     color: "var(--color-text-primary)",
                   }}
                 >
-                  Previous
+                  <span className="sm:hidden">Prev</span>
+                  <span className="hidden sm:inline">Previous</span>
                 </button>
-                <span className="px-4 py-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                <span className="px-3 sm:px-4 py-2 text-xs sm:text-sm min-h-[44px] flex items-center" style={{ color: "var(--color-text-secondary)" }}>
                   Page {currentPage} of {Math.ceil(total / itemsPerPage)}
                 </span>
                 <button
                   onClick={() => setCurrentPage((p) => p + 1)}
                   disabled={currentPage >= Math.ceil(total / itemsPerPage)}
-                  className="px-4 py-2 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="min-h-[44px] px-3 sm:px-4 py-2 text-xs sm:text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     borderColor: "var(--color-border)",
                     color: "var(--color-text-primary)",

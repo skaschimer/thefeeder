@@ -61,8 +61,8 @@ export default function FeedDetails({ feedId, onClose }: FeedDetailsProps) {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-        <div className="card-admin bg-background p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="card-admin bg-background p-4 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <p className="text-foreground">Loading…</p>
         </div>
       </div>
@@ -78,17 +78,17 @@ export default function FeedDetails({ feedId, onClose }: FeedDetailsProps) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <ToastContainer toasts={toasts} onRemove={removeToast} />
-      <div className="card-admin bg-background p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="card-admin bg-background p-4 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-xl font-bold text-foreground">{feed.title}</h2>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0 mb-6">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+              <h2 className="text-lg sm:text-xl font-bold text-foreground break-words">{feed.title}</h2>
               <FeedStatusBadge status={feed.status} />
             </div>
             <p className="text-sm break-all text-muted-foreground">{feed.url}</p>
           </div>
-          <button onClick={onClose} className="btn-admin btn-admin-ghost ml-4 p-2 min-h-0">
+          <button onClick={onClose} className="btn-admin btn-admin-ghost sm:ml-4 p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex-shrink-0 self-end sm:self-auto">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>

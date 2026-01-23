@@ -91,19 +91,19 @@ export default function FeedList({ items, loading }: FeedListProps) {
           >
             Latest Articles
           </h2>
-          <ul className="space-y-1 list-none">
+          <ul className="space-y-1 list-none min-w-0">
             {items.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="min-w-0 overflow-hidden">
                 <a
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block py-1 text-[var(--color-accent-primary)] underline hover:opacity-80"
+                  className="block py-1 text-[var(--color-accent-primary)] underline hover:opacity-80 break-words"
                   dangerouslySetInnerHTML={{ __html: sanitizeForDisplay(item.title) }}
                 />
                 {(item.feed?.title || item.publishedAt) && (
                   <span
-                    className="block text-xs pl-0 mt-0"
+                    className="block text-xs pl-0 mt-0 break-words"
                     style={{ color: "var(--color-text-muted)" }}
                   >
                     {[item.feed?.title, item.publishedAt ? formatDate(item.publishedAt) : null]

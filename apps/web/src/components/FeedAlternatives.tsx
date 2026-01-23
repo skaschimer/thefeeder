@@ -131,7 +131,7 @@ export default function FeedAlternatives({
                 borderColor: 'var(--color-border)' 
               }}
             >
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div 
                     className="text-xs font-mono break-all mb-2"
@@ -165,11 +165,11 @@ export default function FeedAlternatives({
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
                   <button
                     onClick={() => testAlternative(url)}
                     disabled={isTesting}
-                    className="px-3 py-1 text-xs rounded"
+                    className="min-h-[44px] px-3 py-2 text-xs rounded"
                     style={{
                       background: isTesting ? '#ccc' : 'var(--color-accent-primary)',
                       color: '#fff',
@@ -183,7 +183,7 @@ export default function FeedAlternatives({
                     <button
                       onClick={() => replaceUrl(url)}
                       disabled={replacing === url}
-                      className="px-3 py-1 text-xs rounded"
+                      className="min-h-[44px] px-3 py-2 text-xs rounded"
                       style={{
                         background: replacing === url ? '#ccc' : '#10b981',
                         color: '#fff',

@@ -47,7 +47,7 @@ export default function ItemFilters({
     <div className="mb-4">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 text-sm border rounded-md hover:opacity-80 transition-opacity"
+        className="flex items-center gap-2 min-h-[44px] px-4 py-2 text-sm border rounded-md hover:opacity-80 transition-opacity"
         style={{
           background: "var(--color-bg-secondary)",
           borderColor: "var(--color-border)",

@@ -62,7 +62,7 @@ export default function BrowserAutomationStats({ className = '' }: BrowserAutoma
   return (
     <div className={`card-admin p-4 ${className}`}>
       <h3 className="text-sm font-bold mb-3 text-primary">Browser automation (last 7 days)</h3>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <div className="text-xs text-muted-foreground">Success rate</div>
           <div

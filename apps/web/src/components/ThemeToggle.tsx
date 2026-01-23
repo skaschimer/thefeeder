@@ -57,6 +57,7 @@ export function ThemeToggle() {
         {themeIcon[theme]}
       </span>
       <span
+        className="hidden sm:inline"
         style={{
           fontSize: "0.625rem",
           fontWeight: "500",

@@ -6,7 +6,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "scripts": {
-    "dev": "next dev -p 7389",
+    "dev": "next dev -p 8041",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -28,6 +28,7 @@
     "rss-parser": "^3.13.0"
   },
   "devDependencies": {
+    "dotenv": "^16.4.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.11.30",
     "@types/react": "^18.2.66",

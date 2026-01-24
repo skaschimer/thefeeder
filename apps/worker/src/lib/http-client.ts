@@ -5,6 +5,7 @@
 
 import { generateRealisticHeaders, getRandomUserAgent } from "./user-agents.js";
 import { logger } from "./logger.js";
+import { generateProxyUrls } from "./rss-proxy.js";
 
 interface FetchOptions {
   timeout?: number;
@@ -182,6 +183,34 @@ export async function fetchFeed(url: string): Promise<string> {
     }
   } catch (error) {
     // Strategy 3 failed
+  }
+
+  // Strategy 4: Try proxy URLs
+  const proxyEntries = generateProxyUrls(url);
+  for (const { url: proxyUrl } of proxyEntries) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch(proxyUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": getRandomUserAgent(),
+          Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+        },
+        redirect: "follow",
+      });
+      clearTimeout(timeoutId);
+      if (!response.ok) continue;
+      let text = await response.text();
+      if (text.length > 0 && text.charCodeAt(0) === 0xfeff) text = text.substring(1);
+      text = text.trim();
+      const start = text.substring(0, 50).toLowerCase();
+      if (start.includes("<?xml") || start.includes("<rss") || start.includes("<feed")) {
+        return text;
+      }
+    } catch {
+      continue;
+    }
   }
 
   logger.error(`All fetch strategies failed`, new Error("All fetch strategies failed"), { url });

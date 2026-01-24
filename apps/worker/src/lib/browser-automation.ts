@@ -10,6 +10,7 @@ import { logger } from './logger.js';
 export interface BrowserFetchOptions {
   timeout?: number;
   waitForSelector?: string;
+  waitUntil?: 'domcontentloaded' | 'load' | 'networkidle0' | 'networkidle2';
   userAgent?: string;
   viewport?: { width: number; height: number };
 }
@@ -106,68 +107,76 @@ export class BrowserAutomationService {
   }
 
   /**
-   * Fetch feed using headless browser
+   * Fetch feed using headless browser.
+   * Uses domcontentloaded by default to reduce timeout/target-close issues on feed URLs.
    */
   async fetchWithBrowser(url: string, options: BrowserFetchOptions = {}): Promise<string> {
     const {
-      timeout = 30000, // Reduced from 60s to 30s for low resource usage
+      timeout = 30000,
+      waitUntil = 'domcontentloaded',
       userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       viewport = { width: 1920, height: 1080 },
     } = options;
 
-    // Wait if too many concurrent pages
+    const doFetch = async (): Promise<string> => {
+      let page: Page | null = null;
+      try {
+        const browser = await this.getBrowser();
+        page = await browser.newPage();
+
+        logger.debug(`Fetching with browser: ${url}`);
+
+        await page.setUserAgent(userAgent);
+        await page.setViewport(viewport);
+        await page.setExtraHTTPHeaders({
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        });
+
+        const response = await page.goto(url, { timeout, waitUntil });
+
+        if (!response) {
+          throw new Error('No response from page');
+        }
+        if (!response.ok()) {
+          throw new Error(`HTTP ${response.status()}: ${response.statusText()}`);
+        }
+
+        const content = await page.content();
+        logger.debug(`Successfully fetched ${url} (${content.length} bytes)`);
+        return content;
+      } finally {
+        if (page) {
+          await page.close().catch((err: any) => {
+            logger.error('Error closing page', err);
+          });
+        }
+      }
+    };
+
     while (this.activePages >= this.maxConcurrent) {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     this.activePages++;
-    let page: Page | null = null;
-
     try {
-      const browser = await this.getBrowser();
-      page = await browser.newPage();
-
-      logger.debug(`Fetching with browser: ${url}`);
-
-      // Set realistic browser fingerprint
-      await page.setUserAgent(userAgent);
-      await page.setViewport(viewport);
-
-      // Set extra headers
-      await page.setExtraHTTPHeaders({
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      });
-
-      // Navigate to URL
-      const response = await page.goto(url, {
-        timeout,
-        waitUntil: 'networkidle2',
-      });
-
-      if (!response) {
-        throw new Error('No response from page');
-      }
-
-      if (!response.ok()) {
-        throw new Error(`HTTP ${response.status()}: ${response.statusText()}`);
-      }
-
-      // Get page content
-      const content = await page.content();
-
-      logger.debug(`Successfully fetched ${url} (${content.length} bytes)`);
-
-      return content;
+      return await doFetch();
     } catch (error: any) {
+      const isTargetClosed =
+        error?.name === 'TargetCloseError' ||
+        /Target closed|Protocol error \(Target\.setAutoAttach\)/i.test(String(error?.message ?? ''));
+      if (isTargetClosed && this.browser) {
+        this.browser = null;
+        try {
+          return await doFetch();
+        } catch (retryErr: any) {
+          logger.error(`Failed to fetch ${url}`, retryErr);
+          throw retryErr;
+        }
+      }
       logger.error(`Failed to fetch ${url}`, error);
       throw error;
     } finally {
-      if (page) {
-        await page.close().catch((err: any) => {
-          logger.error('Error closing page', err);
-        });
-      }
       this.activePages--;
     }
   }

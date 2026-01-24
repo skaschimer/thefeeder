@@ -42,6 +42,7 @@ COPY --from=deps-web /app/package-lock.json* ./package-lock.json
 
 # Copy web app files
 COPY apps/web/package.json ./package.json
+COPY apps/web/prisma.config.ts ./prisma.config.ts
 COPY apps/web/next.config.mjs ./next.config.mjs
 COPY apps/web/tsconfig.json ./tsconfig.json
 COPY apps/web/postcss.config.mjs ./postcss.config.mjs
@@ -110,10 +111,11 @@ COPY --from=build-web /app/.next/standalone ./
 COPY --from=build-web /app/.next/static ./.next/static
 COPY --from=build-web /app/public ./public
 
-# Prisma schema and migrations for entrypoint (migrate + seed)
+# Prisma schema, config, and migrations for entrypoint (migrate + seed)
 COPY --from=build-web /app/prisma ./prisma
+COPY --from=build-web /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build-web /app/package.json ./package.json
-RUN npm install prisma tsx --no-save --no-audit && npm cache clean --force
+RUN npm install prisma tsx dotenv --no-save --no-audit && npm cache clean --force
 
 # Copy entrypoint scripts and fix line endings (CRLF to LF for Windows compatibility)
 COPY docker-entrypoint-web.sh /docker-entrypoint-web.sh

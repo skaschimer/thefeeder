@@ -6,6 +6,7 @@
 
 import { fetchFeed } from "./http-client.js";
 import { logger } from "./logger.js";
+import { sanitizeXml } from "./xml-sanitize.js";
 
 export interface ParsedFeedV2 {
   title: string;
@@ -210,6 +211,7 @@ export async function parseFeedV2(feedUrl: string): Promise<ParsedFeedV2> {
       throw new Error('Response is not valid XML/RSS feed');
     }
     
+    cleanXml = sanitizeXml(cleanXml);
     // Parse the feed
     const result = detectAndParse(cleanXml);
     

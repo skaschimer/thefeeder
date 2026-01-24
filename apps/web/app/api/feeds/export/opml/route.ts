@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Get site URL from environment
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:7389";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:8041";
     
     // Generate OPML XML
     const opml = generateOPML(feeds, siteUrl);

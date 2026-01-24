@@ -4,23 +4,17 @@
  */
 
 /**
- * Get the base site URL from environment variables
- * Falls back to localhost for development
+ * Get the base site URL from environment variables.
+ * Fallback usa localhost com a porta oficial (8041).
  */
 export function getBaseUrl(): string {
-  // Use environment variable if available
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     return process.env.NEXT_PUBLIC_SITE_URL;
   }
-  
-  // Fallback for development
   if (typeof window !== "undefined") {
-    // Client-side: use current origin
     return window.location.origin;
   }
-  
-  // Server-side fallback for development
-  return "http://localhost:7389";
+  return "http://localhost:8041";
 }
 
 /**

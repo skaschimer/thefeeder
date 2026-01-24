@@ -1,6 +1,7 @@
 import { getRandomUserAgent } from "./user-agents";
 import Parser from "rss-parser";
 import { logger } from "./logger";
+import { sanitizeXml } from "./xml-sanitize";
 
 export interface DiscoveredFeed {
   url: string;
@@ -187,7 +188,41 @@ export async function validateFeedDirect(url: string): Promise<FeedValidationRes
         continue;
       }
       
-      // For other errors, break the loop
+      // Parse errors (malformed comment, entity, attribute, etc.): try fetch → sanitize → parseString
+      const isParseError = /Malformed comment|Invalid character|entity|Unexpected|Attribute without value/i.test(String(error?.message ?? ""));
+      if (isParseError) {
+        try {
+          const res = await fetch(url, {
+            headers: {
+              "User-Agent": userAgents[i],
+              Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+            },
+            signal: AbortSignal.timeout(10000),
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          let body = await res.text();
+          if (body.length > 0 && body.charCodeAt(0) === 0xfeff) body = body.substring(1);
+          body = body.trim();
+          body = sanitizeXml(body);
+          const fallbackParser = new Parser({
+            customFields: {
+              feed: ["subtitle", "updated"],
+              item: [
+                ["media:content", "mediaContent"],
+                ["media:thumbnail", "mediaThumbnail"],
+                ["content:encoded", "contentEncoded"],
+              ],
+            },
+          });
+          const feed = await fallbackParser.parseString(body);
+          const feedInfo = extractFeedInfo(feed);
+          validationCache.set(url, { result: { isValid: true, feedInfo }, timestamp: Date.now() });
+          return { isValid: true, feedInfo };
+        } catch {
+          // fallback failed, keep lastError and fall through
+        }
+      }
+      
       break;
     }
   }

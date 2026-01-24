@@ -5,6 +5,7 @@ import { fetchFeed } from "./http-client.js";
 import { parseFeedV2, type ParsedFeedV2 } from "./feed-parser-v2.js";
 import { browserAutomationService } from "./browser-automation.js";
 import { logger, isOperationalFailure } from "./logger.js";
+import { sanitizeXml } from "./xml-sanitize.js";
 
 const parser = new Parser({
   customFields: {
@@ -101,10 +102,29 @@ export async function parseFeed(feedUrl: string, customUserAgent?: string, requi
     const result = await parseFeedV2(feedUrl);
     // Convert to expected format
     return convertV2ToLegacyFormat(result);
-  } catch (error) {
-    // STEP 1 failed, continue to fallback strategies
+  } catch (error: any) {
+    // When fetch strategies failed, try browser once before STEP 2
+    const msg = String(error?.message ?? "");
+    if (/All fetch strategies failed|Failed to parse feed.*fetch strategies/i.test(msg) && browserAutomationService.isAvailable()) {
+      try {
+        const htmlContent = await browserAutomationService.fetchWithBrowser(feedUrl, { timeout: 30000 });
+        let text = htmlContent;
+        if (text.length > 0 && text.charCodeAt(0) === 0xfeff) text = text.substring(1);
+        text = text.trim();
+        text = sanitizeXml(text);
+        const feed = await parser.parseString(text);
+        return {
+          title: feed.title || "Untitled Feed",
+          link: feed.link,
+          items: feed.items || [],
+          _metadata: { usedBrowserAutomation: true },
+        };
+      } catch {
+        // fall through to STEP 2
+      }
+    }
   }
-  
+
   // STEP 2: Try rss-parser with multiple User-Agents
   // Try with multiple User-Agents if we get 403
   const userAgents = [
@@ -183,6 +203,7 @@ export async function parseFeed(feedUrl: string, customUserAgent?: string, requi
         throw new Error('Response is not valid XML/RSS feed - got HTML or other content');
       }
       
+      text = sanitizeXml(text);
       const parser = new Parser({
         customFields: {
           item: [

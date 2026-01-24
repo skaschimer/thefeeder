@@ -56,6 +56,18 @@ export function stripHtmlTags(html: string): string {
 }
 
 /**
+ * Clean broken HTML attributes that may appear in text
+ * Removes patterns like ="" (empty attributes) and normalizes whitespace
+ */
+function cleanBrokenHtmlAttributes(text: string): string {
+  return text
+    .replace(/=""/g, '')           // Remove empty attributes
+    .replace(/="[^"]*"/g, '')      // Remove attributes with values (in case they escape stripHtmlTags)
+    .replace(/\s{2,}/g, ' ')       // Normalize multiple spaces
+    .trim();
+}
+
+/**
  * Decode HTML entities and strip tags for safe display
  */
 export function sanitizeForDisplay(text: string): string {
@@ -63,5 +75,7 @@ export function sanitizeForDisplay(text: string): string {
   let clean = decodeHtmlEntities(text);
   // Then strip any remaining HTML tags
   clean = stripHtmlTags(clean);
+  // Finally clean broken HTML attributes
+  clean = cleanBrokenHtmlAttributes(clean);
   return clean;
 }

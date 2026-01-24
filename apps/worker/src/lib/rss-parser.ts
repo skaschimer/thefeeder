@@ -296,9 +296,16 @@ export async function parseFeed(feedUrl: string, customUserAgent?: string, requi
 }
 
 export function normalizeFeedItem(item: any) {
-  const title = item.title || "Untitled";
+  // Extract and sanitize title
+  const title = sanitizeForDisplay(item.title || "Untitled");
   const url = item.link || item.guid || item.id || "";
-  const summary = item.contentSnippet || item.content?.substring(0, 500) || undefined;
+  
+  // Extract and sanitize summary/content
+  const summary = item.contentSnippet 
+    ? sanitizeForDisplay(item.contentSnippet)
+    : item.content?.substring(0, 500) 
+      ? sanitizeForDisplay(item.content.substring(0, 500))
+      : undefined;
   const content = item.content || item.contentEncoded || undefined;
   const author = item.creator || item.author || item["dc:creator"] || undefined;
 
@@ -412,6 +419,34 @@ function sanitizeHtml(html: string): string {
     .replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
     .replace(/javascript:/gi, "");
   
+  return clean;
+}
+
+/**
+ * Strip HTML tags from text
+ */
+function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]+>/g, '');
+}
+
+/**
+ * Clean broken HTML attributes that may appear in text
+ */
+function cleanBrokenHtmlAttributes(text: string): string {
+  return text
+    .replace(/=""/g, '')           // Remove empty attributes
+    .replace(/="[^"]*"/g, '')      // Remove attributes with values
+    .replace(/\s{2,}/g, ' ')       // Normalize multiple spaces
+    .trim();
+}
+
+/**
+ * Sanitize text for display: decode entities, strip tags, clean broken attributes
+ */
+function sanitizeForDisplay(text: string): string {
+  let clean = decodeHtmlEntities(text);
+  clean = stripHtmlTags(clean);
+  clean = cleanBrokenHtmlAttributes(clean);
   return clean;
 }
 

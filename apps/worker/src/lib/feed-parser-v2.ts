@@ -68,6 +68,9 @@ function extractText(xmlString: string, tagName: string): string | undefined {
     let text = match[1]
       .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1') // Remove CDATA
       .replace(/<[^>]+>/g, '') // Remove HTML tags
+      .replace(/=""/g, '')           // Remove empty attributes
+      .replace(/="[^"]*"/g, '')      // Remove attributes with values
+      .replace(/\s{2,}/g, ' ')       // Normalize multiple spaces
       .trim();
     
     // Decode HTML entities

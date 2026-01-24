@@ -5,6 +5,7 @@ import { generateProxyUrls, isLikelyBlocked } from "./rss-proxy";
 import { fetchFeed } from "./http-client";
 import { parseFeedV2, type ParsedFeedV2 } from "./feed-parser-v2";
 import { logger } from "./logger";
+import { sanitizeForDisplay } from "./html-utils";
 
 const customFields = {
   item: [
@@ -340,14 +341,18 @@ export function normalizeFeedItem(item: FeedItem): {
   publishedAt?: Date;
   sourceGuid?: string;
 } {
-  // Extract title
-  const title = item.title || "Untitled";
+  // Extract and sanitize title
+  const title = sanitizeForDisplay(item.title || "Untitled");
 
   // Extract URL
   const url = item.link || item.guid || item.id || "";
 
-  // Extract summary/content
-  const summary = item.contentSnippet || item.content?.substring(0, 500) || undefined;
+  // Extract and sanitize summary/content
+  const summary = item.contentSnippet 
+    ? sanitizeForDisplay(item.contentSnippet)
+    : item.content?.substring(0, 500) 
+      ? sanitizeForDisplay(item.content.substring(0, 500))
+      : undefined;
   const content = item.content || item.contentEncoded || undefined;
 
   // Extract author

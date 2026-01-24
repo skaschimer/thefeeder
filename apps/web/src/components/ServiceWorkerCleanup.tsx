@@ -36,8 +36,19 @@ export default function ServiceWorkerCleanup() {
 
           // Clear all storage only when version actually changes
           try {
+            // Preserve theme before clearing
+            const savedTheme = localStorage.getItem('theme');
+            const validThemes = ['vaporwave','clean','directory','catppuccin'];
+            const isValidTheme = savedTheme && validThemes.includes(savedTheme);
+            
+            // Clear storage
             localStorage.clear();
             sessionStorage.clear();
+            
+            // Restore theme if valid
+            if (isValidTheme && savedTheme) {
+              localStorage.setItem('theme', savedTheme);
+            }
           } catch (e) {
             console.warn("[SW] Error clearing storage:", e);
           }

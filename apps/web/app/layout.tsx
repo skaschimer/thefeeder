@@ -86,11 +86,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('theme') || 'vaporwave';
-                  const safe = ['vaporwave','clean','directory','catppuccin'].includes(theme) ? theme : 'vaporwave';
+                  const theme = localStorage.getItem('theme');
+                  const validThemes = ['vaporwave','clean','directory','catppuccin'];
+                  const safe = theme && validThemes.includes(theme) ? theme : 'vaporwave';
+                  
+                  // Apply immediately before any rendering
                   document.documentElement.setAttribute('data-theme', safe);
+                  
+                  // Only save if theme doesn't exist (don't overwrite user's choice)
                   if (!localStorage.getItem('theme')) {
-                    localStorage.setItem('theme', 'vaporwave');
+                    localStorage.setItem('theme', safe);
                   }
                 } catch (e) {
                   document.documentElement.setAttribute('data-theme', 'vaporwave');

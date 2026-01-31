@@ -394,7 +394,7 @@ export default function FeedsManager() {
               onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && (e.preventDefault(), handleDiscover())}
             />
             <button
-              onClick={handleDiscover}
+              onClick={() => handleDiscover()}
               disabled={discovering}
               className="btn-admin btn-admin-primary flex-shrink-0 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >

@@ -52,6 +52,19 @@ export default function NotificationBell() {
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      const res = await fetch('/api/notifications/read-all', {
+        method: 'PATCH',
+      });
+      if (res.ok) {
+        setNotifications([]);
+      }
+    } catch (error) {
+      console.error('Error clearing all notifications:', error);
+    }
+  };
+
   const getNotificationColor = (type: string) => {
     switch (type) {
       case 'error':
@@ -92,10 +105,19 @@ export default function NotificationBell() {
           className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-lg shadow-lg border z-50 max-h-96 overflow-y-auto"
           style={{ background: 'var(--color-bg-primary)', borderColor: 'var(--color-border)' }}
         >
-          <div className="p-3 border-b" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="p-3 border-b flex items-center justify-between gap-2" style={{ borderColor: 'var(--color-border)' }}>
             <h3 className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
               Notifications ({unreadCount})
             </h3>
+            {notifications.length > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-xs px-2 py-1 rounded hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--color-accent-primary)' }}
+              >
+                Limpar todas
+              </button>
+            )}
           </div>
 
           {notifications.length === 0 ? (

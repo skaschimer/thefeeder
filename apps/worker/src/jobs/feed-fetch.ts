@@ -191,12 +191,6 @@ export async function processFeedFetch(job: Job<FeedFetchJobData>) {
       success: true,
     });
 
-    // Check for recovery notification
-    const updatedFeed = await prisma.feed.findUnique({ where: { id: feedId } });
-    if (updatedFeed) {
-      await notificationService.createRecoveryNotification(updatedFeed);
-    }
-
     // Clean up old items if total exceeds 50k
     await cleanupOldItems();
 

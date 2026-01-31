@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/auth";
 import { Role } from "@prisma/client";
 import { discoverFeeds } from "@/src/lib/feed-discovery";
-import { cached, cacheKey } from "@/src/lib/cache";
+import { get, set, cacheKey } from "@/src/lib/cache";
 import { rateLimitByIP } from "@/src/lib/rate-limit-redis";
 import { validateUrl } from "@/src/lib/payload-validator";
 import { getCorsHeaders } from "@/src/lib/cors";
+
+const CACHE_TTL_SUCCESS = 3600; // 1 hour for successful discoveries
+const CACHE_TTL_EMPTY = 300; // 5 minutes for empty results (avoid long cache on failures)
 
 // POST - Discover feeds from a website URL
 export async function POST(req: NextRequest) {
@@ -62,13 +65,17 @@ export async function POST(req: NextRequest) {
       normalizedUrl = `https://${normalizedUrl}`;
     }
 
-    // Cache discovery results for 1 hour (3600 seconds)
+    // Cache discovery results: 1h for success, 5min for empty (avoid long cache on failures)
     const cacheKeyForUrl = cacheKey("discover", normalizedUrl);
-    const feeds = await cached(
-      cacheKeyForUrl,
-      () => discoverFeeds(normalizedUrl),
-      3600, // 1 hour TTL
-    );
+    const cachedFeeds = await get<unknown[]>(cacheKeyForUrl);
+    let feeds: unknown[];
+    if (Array.isArray(cachedFeeds)) {
+      feeds = cachedFeeds;
+    } else {
+      feeds = await discoverFeeds(normalizedUrl);
+      const ttl = feeds.length > 0 ? CACHE_TTL_SUCCESS : CACHE_TTL_EMPTY;
+      set(cacheKeyForUrl, feeds, ttl).catch(() => {});
+    }
 
     return NextResponse.json(
       { feeds },

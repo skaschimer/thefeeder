@@ -188,45 +188,54 @@ export async function validateFeedDirect(url: string): Promise<FeedValidationRes
         continue;
       }
       
-      // Parse errors (malformed comment, entity, attribute, etc.): try fetch → sanitize → parseString
-      const isParseError = /Malformed comment|Invalid character|entity|Unexpected|Attribute without value/i.test(String(error?.message ?? ""));
-      if (isParseError) {
-        try {
-          const res = await fetch(url, {
-            headers: {
-              "User-Agent": userAgents[i],
-              Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
-            },
-            signal: AbortSignal.timeout(10000),
-          });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          let body = await res.text();
-          if (body.length > 0 && body.charCodeAt(0) === 0xfeff) body = body.substring(1);
-          body = body.trim();
-          body = sanitizeXml(body);
-          const fallbackParser = new Parser({
-            customFields: {
-              feed: ["subtitle", "updated"],
-              item: [
-                ["media:content", "mediaContent"],
-                ["media:thumbnail", "mediaThumbnail"],
-                ["content:encoded", "contentEncoded"],
-              ],
-            },
-          });
-          const feed = await fallbackParser.parseString(body);
-          const feedInfo = extractFeedInfo(feed);
-          validationCache.set(url, { result: { isValid: true, feedInfo }, timestamp: Date.now() });
-          return { isValid: true, feedInfo };
-        } catch {
-          // fallback failed, keep lastError and fall through
-        }
+      // Universal fallback: for ANY error (parse, redirect, timeout, network), try fetch → sanitize → parseString
+      // Handles feeds that fail parseURL due to redirects, quirks, or other issues
+      try {
+        const res = await fetch(url, {
+          headers: {
+            "User-Agent": userAgents[i],
+            Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+          },
+          signal: AbortSignal.timeout(10000),
+          redirect: "follow", // Ensure redirects are followed
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        let body = await res.text();
+        if (body.length > 0 && body.charCodeAt(0) === 0xfeff) body = body.substring(1);
+        body = body.trim();
+        body = sanitizeXml(body);
+        const fallbackParser = new Parser({
+          customFields: {
+            feed: ["subtitle", "updated"],
+            item: [
+              ["media:content", "mediaContent"],
+              ["media:thumbnail", "mediaThumbnail"],
+              ["content:encoded", "contentEncoded"],
+            ],
+          },
+        });
+        const feed = await fallbackParser.parseString(body);
+        const feedInfo = extractFeedInfo(feed);
+        validationCache.set(url, { result: { isValid: true, feedInfo }, timestamp: Date.now() });
+        return { isValid: true, feedInfo };
+      } catch {
+        // Fallback failed, keep lastError and fall through
       }
       
       break;
     }
   }
   
+  // Last resort: if URL ends with trailing slash, try without it (some servers differ)
+  if (url.endsWith("/") && url.length > 8) {
+    const urlWithoutSlash = url.slice(0, -1);
+    const altResult = await validateFeedDirect(urlWithoutSlash);
+    if (altResult.isValid && altResult.feedInfo) {
+      validationCache.set(url, { result: altResult, timestamp: Date.now() });
+      return altResult;
+    }
+  }
+
   // All attempts failed
   const duration = Date.now() - startTime;
   let errorMessage = "Invalid feed format";
@@ -758,9 +767,10 @@ async function discoverCommonFeeds(siteUrl: string): Promise<DiscoveredFeed[]> {
   const feeds: DiscoveredFeed[] = [];
   const baseUrl = new URL(siteUrl);
   
-  // Expanded list of common feed paths
+  // Expanded list of common feed paths (include both /feed and /feed/ for server variants)
   const commonPaths = [
     "/feed",
+    "/feed/",
     "/feed.xml",
     "/feed/rss",
     "/feed/atom",

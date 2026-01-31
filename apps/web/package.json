@@ -2,9 +2,6 @@
   "name": "thefeeder-web",
   "private": true,
   "version": "1.0.0",
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "scripts": {
     "dev": "next dev -p 8041",
     "build": "next build",

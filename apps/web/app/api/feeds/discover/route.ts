@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { url } = body;
+    const { url, bypassCache } = body;
 
     if (!url || typeof url !== "string") {
       return NextResponse.json(
@@ -66,15 +66,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Cache discovery results: 1h for success, 5min for empty (avoid long cache on failures)
-    const cacheKeyForUrl = cacheKey("discover", normalizedUrl);
-    const cachedFeeds = await get<unknown[]>(cacheKeyForUrl);
+    // v2 prefix invalidates stale Redis cache from before fallback/improvements
+    const cacheKeyForUrl = cacheKey("discover", "v2", normalizedUrl);
+    const cachedFeeds = bypassCache ? null : await get<unknown[]>(cacheKeyForUrl);
     let feeds: unknown[];
     if (Array.isArray(cachedFeeds)) {
       feeds = cachedFeeds;
     } else {
       feeds = await discoverFeeds(normalizedUrl);
-      const ttl = feeds.length > 0 ? CACHE_TTL_SUCCESS : CACHE_TTL_EMPTY;
-      set(cacheKeyForUrl, feeds, ttl).catch(() => {});
+      if (!bypassCache) {
+        const ttl = feeds.length > 0 ? CACHE_TTL_SUCCESS : CACHE_TTL_EMPTY;
+        set(cacheKeyForUrl, feeds, ttl).catch(() => {});
+      }
     }
 
     return NextResponse.json(

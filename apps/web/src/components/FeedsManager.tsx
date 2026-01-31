@@ -34,6 +34,7 @@ export default function FeedsManager() {
   const [discoverUrl, setDiscoverUrl] = useState("");
   const [selectedFeedId, setSelectedFeedId] = useState<string | null>(null);
   const [discovering, setDiscovering] = useState(false);
+  const [discoverAttempted, setDiscoverAttempted] = useState(false);
   const [discoveredFeeds, setDiscoveredFeeds] = useState<Array<{ url: string; title: string; type: string }>>([]);
   const [importingOPML, setImportingOPML] = useState(false);
   const [importResult, setImportResult] = useState<{ imported: number; skipped: number; total: number; errors?: string[] } | null>(null);
@@ -85,7 +86,7 @@ export default function FeedsManager() {
         fetchFeeds();
         setShowForm(false);
         setEditing(null);
-        setFormData({ title: "", url: "", siteUrl: "", refreshIntervalMinutes: 60 });
+        setFormData({ title: "", url: "", siteUrl: "", refreshIntervalMinutes: 180 });
         success(editing ? "Feed updated successfully!" : "Feed created successfully!");
       } else {
         const data = await res.json();
@@ -164,7 +165,7 @@ export default function FeedsManager() {
     );
   }
 
-  const handleDiscover = async () => {
+  const handleDiscover = async (bypassCache = false) => {
     if (!discoverUrl.trim()) {
       warning("Please enter a URL");
       return;
@@ -177,13 +178,14 @@ export default function FeedsManager() {
       const res = await fetch("/api/feeds/discover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: discoverUrl }),
+        body: JSON.stringify({ url: discoverUrl, bypassCache }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
         setDiscoveredFeeds(data.feeds || []);
+        setDiscoverAttempted(true);
         if (data.feeds.length === 0) {
           warning("No feeds found for this URL");
         } else {
@@ -327,6 +329,7 @@ export default function FeedsManager() {
               if (showDiscover) {
                 setDiscoveredFeeds([]);
                 setDiscoverUrl("");
+                setDiscoverAttempted(false);
               }
             }}
             className="btn-admin btn-admin-secondary flex-1 sm:flex-initial"
@@ -338,7 +341,7 @@ export default function FeedsManager() {
               setShowForm(!showForm);
               setEditing(null);
               setShowDiscover(false);
-              setFormData({ title: "", url: "", siteUrl: "", refreshIntervalMinutes: 60 });
+              setFormData({ title: "", url: "", siteUrl: "", refreshIntervalMinutes: 180 });
             }}
             className="btn-admin btn-admin-primary flex-1 sm:flex-initial"
           >
@@ -398,6 +401,17 @@ export default function FeedsManager() {
               {discovering ? "Searching…" : "Discover"}
             </button>
           </div>
+          {discoverAttempted && discoveredFeeds.length === 0 && discoverUrl && !discovering && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => handleDiscover(true)}
+                className="btn-admin btn-admin-ghost text-xs"
+              >
+                Tentar novamente (sem cache)
+              </button>
+            </div>
+          )}
           {discoveredFeeds.length > 0 && (
             <div className="mt-4 space-y-2">
               <p className="label-admin font-semibold text-foreground">Found {discoveredFeeds.length} feed(s)</p>

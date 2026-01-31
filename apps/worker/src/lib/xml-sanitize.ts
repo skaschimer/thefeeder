@@ -27,6 +27,15 @@ function sanitizeAmpersands(xml: string): string {
 }
 
 /**
+ * Fix unescaped < in text that creates "Invalid character in tag name".
+ * E.g. "3 < 5" or "<;" in content - the < starts a "tag" but space/semicolon are invalid.
+ * Valid tag starts: letter, _, :, !, ?, /
+ */
+function sanitizeInvalidTagStarts(xml: string): string {
+  return xml.replace(/<(?=[\s;0-9>])/g, "&lt;");
+}
+
+/**
  * Fix "Attribute without value": bare attribute names get value="" (same logic as web).
  */
 function sanitizeBareAttributes(xml: string): string {
@@ -46,6 +55,7 @@ export function sanitizeXml(xml: string): string {
   let s = xml;
   s = sanitizeComments(s);
   s = sanitizeAmpersands(s);
+  s = sanitizeInvalidTagStarts(s);
   s = sanitizeBareAttributes(s);
   return s;
 }

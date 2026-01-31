@@ -104,7 +104,7 @@ export default function FeedsManager() {
       title: feed.title,
       url: feed.url,
       siteUrl: feed.siteUrl || "",
-      refreshIntervalMinutes: feed.refreshIntervalMinutes,
+      refreshIntervalMinutes: Math.max(180, feed.refreshIntervalMinutes),
     });
     setShowForm(true);
   };
@@ -472,8 +472,13 @@ export default function FeedsManager() {
             <input
               type="number"
               min={180}
+              step={60}
               value={formData.refreshIntervalMinutes}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, refreshIntervalMinutes: parseInt(e.target.value) || 180 })}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                const val = parseInt(e.target.value, 10);
+                const clamped = Math.max(180, Number.isNaN(val) ? 180 : val);
+                setFormData({ ...formData, refreshIntervalMinutes: clamped });
+              }}
               required
               className="input-admin w-full"
             />
